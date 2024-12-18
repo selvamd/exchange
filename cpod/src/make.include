@@ -1,0 +1,146 @@
+## Makefile include 
+
+## Get OS
+UNAME := $(shell uname)
+
+# SBUILD set to CENTOS or UBUNTU for Linux targets - need to know which because some paths differ between them
+SBUILD := $(shell if [ -f /etc/redhat-release ]; then echo CENTOS; fi; if [ -f /etc/lsb-release ]; then echo UBUNTU; fi;)
+
+# Colors
+NO_COLOR    = \x1b[0m
+OK_COLOR    = \x1b[32;01m
+WARN_COLOR  = \x1b[33;01m
+ERROR_COLOR = \x1b[31;01m
+
+
+## INCLUDE_OFFSET is the number ../ need to get to the src directory -1.  The default is empty and works for any subdir of src. Deeper subdirectories may set the value to access all the include directory without changing the environement variables
+
+## Root directory
+ROOT_DIR = /Users/coder
+
+## Source directory
+DEV_DIR = $(ROOT_DIR)/dev_git/exchange.git
+
+## Install directories
+#BUILD_DIR = $(DEV_DIR)/build
+BUILD_DIR = ../../build
+LIB_INSTALL_DIR = $(BUILD_DIR)/libs
+BIN_INSTALL_DIR =  $(BUILD_DIR)/bin
+HTML_INSTALL_DIR =  $(BUILD_DIR)/html
+TEST_PROGRAMS_INSTALL_DIR = $(BUILD_DIR)/test_programs
+
+##Include directories
+#LIBS_INCLUDE = $(DEV_DIR)/src/libs
+LIBS_INCLUDE = $(INCLUDE_OFFSET)../libs
+
+## Global include
+#GLOBAL_INCLUDE = $(DEV_DIR)/src/include
+GLOBAL_INCLUDE = $(INCLUDE_OFFSET)../include
+
+## Generate code include directory
+GENERATED_CODE_INCLUDE = $(INCLUDE_OFFSET)../generated_code/include
+
+## External dev tool directory 
+EXT_DEV_TOOLS_ROOT_DIR =$(INCLUDE_OFFSET)../../external_libs
+
+## Google test libraries
+GTEST_INC_DIR = $(EXT_DEV_TOOLS_ROOT_DIR)/googletest/gtest-1.7.0/include
+GTEST_LIB = $(EXT_DEV_TOOLS_ROOT_DIR)/googletest/gtest-1.7.0/make/gtest_main.a
+ 
+## Quick Fix  test libraries
+QF_INC_DIR = $(EXT_DEV_TOOLS_ROOT_DIR)/quickfix/quickfix-1.14.3/include
+QF_LIB_DIR = $(EXT_DEV_TOOLS_ROOT_DIR)/quickfix/quickfix-1.14.3/lib
+QF_LIB = $(QF_LIB_DIR)/libquickfix.a
+
+## GD libraries
+GDLIBS = -lz -lfreetype -ljpeg -lpng -lgd
+
+## System libs
+SYSLIBS = -lm -lpthread 
+
+##exchange libs
+EXCHANGE_LIBS = $(LIB_INSTALL_DIR)/generated.a $(LIB_INSTALL_DIR)/exchange.a $(LIB_INSTALL_DIR)/generated.a $(LIB_INSTALL_DIR)/exchange.a $(QF_LIB)
+
+##RapidXML include directory
+RAPID_XML_INC_DIR = $(EXT_DEV_TOOLS_ROOT_DIR)/rapidxml/rapidxml-1.13
+
+##RapidJSON include directory
+RAPID_JSON_INC_DIR = $(EXT_DEV_TOOLS_ROOT_DIR)
+
+##xml2json include directory
+XML2JSON_INC_DIR = $(EXT_DEV_TOOLS_ROOT_DIR)/xml2json/include
+
+## URI Parsing Library
+URI_INC_DIR = $(EXT_DEV_TOOLS_ROOT_DIR)/urisyntax
+URI_LIB_DIR = $(EXT_DEV_TOOLS_ROOT_DIR)/urisyntax
+URI_LIB = $(URI_LIB_DIR)/urisyntax.a
+
+## Poco Net and Foundation Library
+POCO_INC_DIR = -isystem$(EXT_DEV_TOOLS_ROOT_DIR)/poco-1.6.0/Net/include -isystem$(EXT_DEV_TOOLS_ROOT_DIR)/poco-1.6.0/Foundation/include
+
+ifeq ($(UNAME), Linux)
+POCO_LIB_DIR = $(EXT_DEV_TOOLS_ROOT_DIR)/poco-1.6.0/lib/Linux/x86_64
+endif
+ifeq ($(UNAME), Darwin)
+POCO_LIB_DIR = $(EXT_DEV_TOOLS_ROOT_DIR)/poco-1.6.0/lib/Darwin/x86_64
+endif
+
+POCO_LIBS = -L$(POCO_LIB_DIR) -lPocoNet -lPocoFoundation
+
+MONGO_DRIVER_INC_DIR = -isystem/usr/local/include/mongocxx/v_noabi -isystem/usr/local/include/libmongoc-1.0 -isystem/usr/local/include/bsoncxx/v_noabi -isystem/usr/local/include/libbson-1.0
+MONGO_DRIVER_LIB_DIR = /usr/local/lib
+ifeq ($(UNAME), Linux)
+# Hardcode the MONGO_DRIVER_LIB_DIR so the shared mongo library can be found when running the app
+MONGO_DRIVER_LIB = -Wl,-rpath,$(MONGO_DRIVER_LIB_DIR) -lmongocxx -lbsoncxx
+else
+MONGO_DRIVER_LIB = -L$(MONGO_DRIVER_LIB_DIR) -lmongocxx -lbsoncxx
+endif
+
+#OpenSSL library
+OPEN_SSL_DIR = $(EXT_DEV_TOOLS_ROOT_DIR)/openssl-1.0.2g
+OPENSSL_INC_DIR = -I$(OPEN_SSL_DIR)/include 
+OPENSSL_LIB_DIR = $(OPEN_SSL_DIR)
+OPENSSL_LIBS = -L$(OPENSSL_LIB_DIR) -lssl -lcrypto -ldl
+
+#PCAP library
+PCAP_DIR     =  $(EXT_DEV_TOOLS_ROOT_DIR)/pcap/libpcap-1.7.4
+PCAP_INCLUDE = -I$(PCAP_DIR)/pcap -I$(PCAP_DIR)
+PCAP_LIB     =  -L$(PCAP_DIR) -lpcap
+
+#Mysql library and include
+ifeq ($(SBUILD), UBUNTU)
+MYSQL_ROOT_DIR = /usr
+MYSQL_INC_DIR = $(MYSQL_ROOT_DIR)/include/mysql
+MYSQL_LIB_DIR = $(MYSQL_ROOT_DIR)/lib/x86_64-linux-gnu
+MYSQL_LIB = $(MYSQL_LIB_DIR)/libmysqlclient.a -lz -ldl
+else
+MYSQL_ROOT_DIR = /usr/local/mysql
+MYSQL_INC_DIR = $(MYSQL_ROOT_DIR)/include
+MYSQL_LIB_DIR = $(MYSQL_ROOT_DIR)/lib
+#MYSQL_LIB = -L$(MYSQL_LIB_DIR) -lmysqlclient -lmysqlservices -ldl
+MYSQL_LIB = $(MYSQL_LIB_DIR)/libmysqlclient.a -ldl
+endif
+
+##Include directory for all external lis
+# Note: using -isystem to turn off compiler warnings in specific external 3rd party libraries
+EXT_LIBS_INCLUDE = -isystem$(GTEST_INC_DIR) -isystem$(RAPID_XML_INC_DIR) -isystem$(XML2JSON_INC_DIR) -isystem$(URI_INC_DIR) -isystem$(QF_INC_DIR) -isystem$(MYSQL_INC_DIR) $(MONGO_DRIVER_INC_DIR) $(POCO_INC_DIR) $(OPENSSL_INC_DIR)
+
+# CXX_WARNINGS to assert how strict to validate code during compile
+ifeq ($(UNAME), Linux)
+CXX_WARNINGS = -Wall -Wextra -Wpedantic -Wredundant-decls -Wstrict-null-sentinel -Wno-switch
+SHM_LIBS = -lrt
+endif
+ifeq ($(UNAME), Darwin)
+CXX_WARNINGS = -Wall -Wextra -Wpedantic -Wredundant-decls -Wno-switch
+SHM_LIBS =
+endif
+
+# Compiler command
+CXX = g++ $(CXX_WARNINGS)
+
+COV ?= 0
+ifeq ($(COV), 1)
+    COVFLAGS = -fprofile-arcs -ftest-coverage -O0 -lgcov
+else
+    COVFLAGS =
+endif

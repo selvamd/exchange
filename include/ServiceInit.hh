@@ -20,7 +20,7 @@ using namespace std;
 
 const std::string DATA_DIR = "../data/"; 
 DomainDB &database = DomainDB::instance(1);
-DBFileSerializer dbwriter("accounts.db");
+DBFileSerializer dbwriter("matcher.db");
 char bufSerializer[1500];
 char bufLogger[8192];
 
@@ -75,4 +75,3 @@ template<> void closedb<Service_t::MATCHER>()
 
     printdb<Service_t::MATCHER>();
 }
-

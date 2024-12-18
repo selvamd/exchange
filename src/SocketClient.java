@@ -31,7 +31,7 @@ public class SocketClient {
         //         try { for (int i=0;i<1E6;i++) in.read(bo); 
         //         } catch (Exception e) {} }}  ); 
         long l0 = System.currentTimeMillis();  
-        for (int i=0;i<1E6;i++) 
+        for (int i=0;i<100;i++) 
         {
             out.write(bytes);
             in.read(bo);

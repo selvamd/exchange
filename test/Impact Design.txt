@@ -1,0 +1,36 @@
+BusinessSvc
+~~~~~~~~~~~
+1. Open Account - CreateBusiness
+2. Deposit/Withdraw - ISSUE,LEND,BUYBACK,REDEEM
+3. Expense - EXPENSE, REIMBURSE, CASHEXPENSE, PAYINTEREST, PAYDIVIDEND
+4. TradeEvent - PURCHASE, SALE
+5. SettleEvent - PAYFORBUY, PAIDFROMSALE
+6. Price update - SETVALUE
+
+TradingSvc
+~~~~~~~~~~
+1.a From BusinessSvc - Store accounts ==> funds_limit
+1.b	From Symbol/Event ==> ref_px
+	c. Symbol mktprice 
+
+2. Make exch orders - 
+	a. Find value_delta -> limit_px for all stocks
+	b. Post limit orders in most mktable stocks
+	c. Send price sweep orders as stocks become mktable
+	d. Recall posted volumes if needed
+
+3. Make trades 
+4. Settle trades
+5. Update inventory value per symbol per account
+6. Add Live price update
+
+StockreporterSvc
+~~~~~~~~~~~~~~~~
+1. Add live px update
+
+LivePriceSvc
+~~~~~~~~~~~~
+- SubscribeAllRequest
+- SubscribeSymbolRequest
+
+
