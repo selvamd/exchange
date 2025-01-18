@@ -2,7 +2,7 @@ CC = g++
 CPPFLAGS = -DHAVE_CONFIG_H  -D_REENTRANT \
 	-std=c++17 -g -O2 -fvisibility=hidden \
 	-Wall -Wno-overloaded-virtual  -Wno-deprecated-declarations \
-	-Iinclude -I../libinclude/phoenix -I../libinclude/quickfix 
+	-Imain -Iinclude -I../libinclude/phoenix -I../libinclude/quickfix 
 LDFLAGS = -L../lib -lphoenix -lquickfix -lcurl -lm 
 
 PROGS = exchcli matcher fixgateway
