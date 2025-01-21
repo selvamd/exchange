@@ -308,3 +308,68 @@ class FirmLookup : public DomainObjectBase<FirmLookup>
         };
 
 };
+
+class ConfigLookup : public DomainObjectBase<ConfigLookup>
+{
+    public:
+    
+        friend DomainTable<ConfigLookup>;
+        static int TableID() { return static_cast<int>(DomainObjects_t::CONFIGLOOKUP); }
+        static string TableName() { return "ConfigLookup"; }
+        ConfigLookup(int i = -1, void * sBuff = NULL) : d_row(i), d_dbid(0) { clone(sBuff); }
+    
+        //Use DECLARE_INDEX if the data member is used to construct an index 
+        DECLARE_INDEX(EnumData<ConfigName_t>, ConfigName, 0)
+        DECLARE_INDEX(int64_t, SymbolId,      1)
+        DECLARE_INDEX(int64_t, FirmId,        2)
+        DECLARE_MEMBER(int64_t, ConfigValue,  3)
+
+        static int maxFields()    { return 4; }
+        #define SET(FieldIndex) DECLARE_END(FieldIndex)
+        SET4()
+        #undef SET
+                    
+        const int d_row;
+        const uint32_t d_dbid;
+    
+    private:
+
+        //Called during table construction to create indexes 
+        static void createIndices(DomainTable<ConfigLookup> &table)
+        {
+            table.addIndex("PrimaryKey", primarykey);
+            table.addIndex("FirmConfigKey", firmkey);
+        };
+
+        static bool primarykey(const ConfigLookup * a,  const ConfigLookup * b)
+        {
+            int i = a->getConfigName().compareForIndex(b->getConfigName());
+            if (i != 0) return i < 0;
+
+            if ( a->getSymbolId() != b->getSymbolId() )
+                if ( a->getSymbolId() >= 0 && b->getSymbolId() >= 0 )
+                    return ( a->getSymbolId() < b->getSymbolId() );
+
+            if ( a->getFirmId() != b->getFirmId() )
+                if ( a->getFirmId() >= 0 && b->getFirmId() >= 0 )
+                    return ( a->getFirmId() < b->getFirmId() );
+
+            return a->d_row < b->d_row;
+        };
+
+        static bool firmkey(const ConfigLookup * a,  const ConfigLookup * b)
+        {
+            int i = a->getConfigName().compareForIndex(b->getConfigName());
+            if (i != 0) return i < 0;
+
+            if ( a->getFirmId() != b->getFirmId() )
+                if ( a->getFirmId() >= 0 && b->getFirmId() >= 0 )
+                    return ( a->getFirmId() < b->getFirmId() );
+
+            if ( a->getSymbolId() != b->getSymbolId() )
+                if ( a->getSymbolId() >= 0 && b->getSymbolId() >= 0 )
+                    return ( a->getSymbolId() < b->getSymbolId() );
+
+            return a->d_row < b->d_row;
+        };
+};
