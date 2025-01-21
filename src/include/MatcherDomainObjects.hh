@@ -98,7 +98,7 @@ class OrderLookup : public DomainObjectBase<OrderLookup>
                 if (a->getOrderId() >= 0 && b->getOrderId() >= 0)
     				return a->getOrderId() < b->getOrderId();
 			return a->d_row < b->d_row;
-		}
+		};
 
 		static bool bookIndex(const OrderLookup* a,  const OrderLookup* b)
 		{
@@ -127,7 +127,7 @@ class OrderLookup : public DomainObjectBase<OrderLookup>
 				    return a->getRankTime() < b->getRankTime();
 
 			return a->d_row < b->d_row;
-		}
+		};
 
         //Index used for lookup during self-trade and previous riskfill 
 		static bool ownerBookIndex(const OrderLookup* a,  const OrderLookup* b)
@@ -161,7 +161,7 @@ class OrderLookup : public DomainObjectBase<OrderLookup>
 				    return a->getRankTime() < b->getRankTime();
 
 			return a->d_row < b->d_row;
-		}
+		};
 
 		static bool cancelIndex(const OrderLookup* a,  const OrderLookup* b)
 		{
@@ -174,7 +174,7 @@ class OrderLookup : public DomainObjectBase<OrderLookup>
 					return a->getDeliverToCompId() < b->getDeliverToCompId();
 
 			return a->d_row < b->d_row;
-		}
+		};
 
 		static bool clOrdIdIndex(const OrderLookup* a,  const OrderLookup* b)
 		{
@@ -184,7 +184,7 @@ class OrderLookup : public DomainObjectBase<OrderLookup>
 			int i = a->getClOrdId().compareForIndex(b->getClOrdId());
 			if ( i != 0 ) return (i < 0);
 			return a->d_row < b->d_row;
-		}
+		};
 
 		static bool conditionalIndex(const OrderLookup* a,  const OrderLookup* b)
 		{
@@ -200,7 +200,7 @@ class OrderLookup : public DomainObjectBase<OrderLookup>
 				    return a->getInviteId() < b->getInviteId();
 
 			return a->d_row < b->d_row;
-		}
+		};
 };
 
 class SymbolLookup : public DomainObjectBase<SymbolLookup>
@@ -240,13 +240,13 @@ class SymbolLookup : public DomainObjectBase<SymbolLookup>
                 if ( a->getSymbolId() >= 0 && b->getSymbolId() >= 0 )
                     return ( a->getSymbolId() < b->getSymbolId() );
             return a->d_row < b->d_row;
-        }
+        };
 
         static bool tickerKey(const SymbolLookup * a,  const SymbolLookup * b)
         {
             int i = a->getName().compareForIndex(b->getName());
             return (i == 0 )? a->d_row < b->d_row : i < 0;
-        }
+        };
 };
 
 class FirmLookup : public DomainObjectBase<FirmLookup>
@@ -288,13 +288,15 @@ class FirmLookup : public DomainObjectBase<FirmLookup>
                 if (a->getFirmId() >= 0 && b->getFirmId() >= 0) 
                         return ( a->getFirmId() < b->getFirmId() );
             return a->d_row < b->d_row;
-        }
+        };
 
         static bool firmKey(const FirmLookup * a,  const FirmLookup * b)
         {
             int i = a->getFirmRecordType().compareForIndex(b->getFirmRecordType());
             if (i != 0) return i < 0;
 
+            //subid are flow identifiers within a firm (or mpid)
+            //Cannot expect to be unique across firms 
             i = a->getName().compareForIndex(b->getName());
             if (i != 0 ) return i < 0;
 
@@ -303,6 +305,6 @@ class FirmLookup : public DomainObjectBase<FirmLookup>
                     return a->getParentFirm() > b->getParentFirm();
 
             return a->d_row < b->d_row;
-        }
+        };
 
 };
