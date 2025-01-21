@@ -43,7 +43,7 @@ class OrderLookup : public DomainObjectBase<OrderLookup>
 		DECLARE_INDEX(int64_t, OrderId, 13)
 
 		DECLARE_MEMBER(int32_t, PartyId, 14) //MPID
-        DECLARE_MEMBER(FixedString<exchange::COMP_ID_LENGTH+1>, PartySubId, 15) //SUBID
+		DECLARE_MEMBER(int32_t, PartySubId, 15) //SUBID
 		DECLARE_MEMBER(int64_t, ExecId, 16)
 		DECLARE_MEMBER(int64_t, Price, 17)
 		DECLARE_MEMBER(int64_t, ArrivalTime, 18)
@@ -95,14 +95,16 @@ class OrderLookup : public DomainObjectBase<OrderLookup>
 		static bool primaryKey(const OrderLookup* a,  const OrderLookup* b)
 		{
 			if (a->getOrderId() != b->getOrderId())
-				return a->getOrderId() < b->getOrderId();
+                if (a->getOrderId() >= 0 && b->getOrderId() >= 0)
+    				return a->getOrderId() < b->getOrderId();
 			return a->d_row < b->d_row;
 		}
 
 		static bool bookIndex(const OrderLookup* a,  const OrderLookup* b)
 		{
 			if (a->getSymbolId() != b->getSymbolId())
-				return a->getSymbolId() < b->getSymbolId();
+                if (a->getSymbolId() >= 0 && b->getSymbolId() >= 0)
+    				return a->getSymbolId() < b->getSymbolId();
 
             int i = a->getSide().compareForIndex(b->getSide());
             if (i != 0) return i < 0;
@@ -116,13 +118,13 @@ class OrderLookup : public DomainObjectBase<OrderLookup>
                 i = a->getContraCategory().compareForIndex(b->getContraCategory());
                 if (i != 0) return i > 0;
             } else {
-                if (a->getOrderQty() < b->getOrderQty())
-                    return 1;
-                else if (a->getOrderQty() > b->getOrderQty())
-                    return -1;
+                if (a->getOrderQty() != b->getOrderQty())
+				    if ( (a->getOrderQty() >= 0) && (b->getOrderQty() >= 0))
+                        return b->getOrderQty() > a->getOrderQty();
             }
 			if (a->getRankTime() != b->getRankTime())
-				return a->getRankTime() < b->getRankTime();
+				if ( (a->getRankTime() >= 0) && (b->getRankTime() >= 0))
+				    return a->getRankTime() < b->getRankTime();
 
 			return a->d_row < b->d_row;
 		}
@@ -131,7 +133,8 @@ class OrderLookup : public DomainObjectBase<OrderLookup>
 		static bool ownerBookIndex(const OrderLookup* a,  const OrderLookup* b)
 		{
 			if (a->getSymbolId() != b->getSymbolId())
-				return a->getSymbolId() < b->getSymbolId();
+                if (a->getSymbolId() >= 0 && b->getSymbolId() >= 0)
+    				return a->getSymbolId() < b->getSymbolId();
 
             int i = a->getSide().compareForIndex(b->getSide());
             if (i != 0) return i < 0;
@@ -140,7 +143,8 @@ class OrderLookup : public DomainObjectBase<OrderLookup>
             if (i != 0) return i < 0;
 
 			if (a->getFirmId() != b->getFirmId())
-				return a->getFirmId() < b->getFirmId();
+				if ( (a->getFirmId() >= 0) && (b->getFirmId() >= 0))
+				    return a->getFirmId() < b->getFirmId();
 
 			if (a->getClientType().compareForIndex(ClientType_t::INVESTOR) == 0) {
                 i = a->getOrderUrgency().compareForIndex(b->getOrderUrgency());
@@ -148,13 +152,13 @@ class OrderLookup : public DomainObjectBase<OrderLookup>
                 i = a->getContraCategory().compareForIndex(b->getContraCategory());
                 if (i != 0) return i > 0;
             } else {
-                if (a->getOrderQty() < b->getOrderQty())
-                    return 1;
-                else if (a->getOrderQty() > b->getOrderQty())
-                    return -1;
+                if (a->getOrderQty() != b->getOrderQty())
+				    if ( (a->getOrderQty() >= 0) && (b->getOrderQty() >= 0))
+                        return b->getOrderQty() > a->getOrderQty();
             }
 			if (a->getRankTime() != b->getRankTime())
-				return a->getRankTime() < b->getRankTime();
+				if ( (a->getRankTime() >= 0) && (b->getRankTime() >= 0))
+				    return a->getRankTime() < b->getRankTime();
 
 			return a->d_row < b->d_row;
 		}
@@ -185,13 +189,15 @@ class OrderLookup : public DomainObjectBase<OrderLookup>
 		static bool conditionalIndex(const OrderLookup* a,  const OrderLookup* b)
 		{
 			if (a->getSymbolId() != b->getSymbolId())
-				return a->getSymbolId() < b->getSymbolId();
+				if ( (a->getSymbolId() != -1) && (b->getSymbolId() != -1))
+    				return a->getSymbolId() < b->getSymbolId();
 
             int i = a->getSide().compareForIndex(b->getSide());
             if (i != 0) return i < 0;
 
 			if (a->getInviteId() != b->getInviteId())
-				return a->getInviteId() < b->getInviteId();
+				if ( (a->getInviteId() != -1) && (b->getInviteId() != -1))
+				    return a->getInviteId() < b->getInviteId();
 
 			return a->d_row < b->d_row;
 		}
@@ -255,12 +261,13 @@ class FirmLookup : public DomainObjectBase<FirmLookup>
         //Use DECLARE_INDEX if the data member is used to construct an index 
         DECLARE_INDEX(int64_t, FirmId, 0)
         DECLARE_INDEX(FixedString<20>, Name, 1)
-        DECLARE_MEMBER(EnumData<FirmType_t>, FirmType, 2)
-        DECLARE_MEMBER(EnumData<EntityStatus_t>, EntityStatus, 3)
+        DECLARE_INDEX(EnumData<FirmRecordType_t>, FirmRecordType, 2)
+        DECLARE_INDEX(int64_t, ParentFirm, 3)
+        DECLARE_MEMBER(int64_t, ParentMPID, 4)
 
-        static int maxFields()    { return 4; }
+        static int maxFields()    { return 5; }
         #define SET(FieldIndex) DECLARE_END(FieldIndex)
-        SET4()
+        SET5()
         #undef SET
                     
         const int d_row;
@@ -279,14 +286,23 @@ class FirmLookup : public DomainObjectBase<FirmLookup>
         {
             if ( a->getFirmId() != b->getFirmId() )
                 if (a->getFirmId() >= 0 && b->getFirmId() >= 0) 
-                    return ( a->getFirmId() < b->getFirmId() );
+                        return ( a->getFirmId() < b->getFirmId() );
             return a->d_row < b->d_row;
         }
 
         static bool firmKey(const FirmLookup * a,  const FirmLookup * b)
         {
-            int i = a->getName().compareForIndex(b->getName());
-            return (i == 0 )? a->d_row < b->d_row : i < 0;
+            int i = a->getFirmRecordType().compareForIndex(b->getFirmRecordType());
+            if (i != 0) return i < 0;
+
+            i = a->getName().compareForIndex(b->getName());
+            if (i != 0 ) return i < 0;
+
+            if (a->getParentFirm() != b->getParentFirm())
+                if (a->getParentFirm() >= 0 && b->getParentFirm() >= 0) 
+                    return a->getParentFirm() > b->getParentFirm();
+
+            return a->d_row < b->d_row;
         }
 
 };
