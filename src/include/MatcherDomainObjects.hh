@@ -86,7 +86,6 @@ class OrderLookup : public DomainObjectBase<OrderLookup>
             table.addIndex("PrimaryKey", primaryKey);
             table.addIndex("BookIndex", bookIndex);
             table.addIndex("OwnerBookIndex", ownerBookIndex);
-
             table.addIndex("ClordidIndex", clOrdIdIndex);
             table.addIndex("ConditionalIndex", conditionalIndex);
             table.addIndex("CancelIndex", cancelIndex);
@@ -95,7 +94,7 @@ class OrderLookup : public DomainObjectBase<OrderLookup>
 		static bool primaryKey(const OrderLookup* a,  const OrderLookup* b)
 		{
 			if (a->getOrderId() != b->getOrderId())
-                if (a->getOrderId() >= 0 && b->getOrderId() >= 0)
+                if (min(a->getOrderId(),b->getOrderId()) >= 0)
     				return a->getOrderId() < b->getOrderId();
 			return a->d_row < b->d_row;
 		};
@@ -103,7 +102,7 @@ class OrderLookup : public DomainObjectBase<OrderLookup>
 		static bool bookIndex(const OrderLookup* a,  const OrderLookup* b)
 		{
 			if (a->getSymbolId() != b->getSymbolId())
-                if (a->getSymbolId() >= 0 && b->getSymbolId() >= 0)
+                if (min(a->getSymbolId(),b->getSymbolId()) >= 0)
     				return a->getSymbolId() < b->getSymbolId();
 
             int i = a->getSide().compareForIndex(b->getSide());
@@ -119,11 +118,11 @@ class OrderLookup : public DomainObjectBase<OrderLookup>
                 if (i != 0) return i > 0;
             } else {
                 if (a->getOrderQty() != b->getOrderQty())
-				    if ( (a->getOrderQty() >= 0) && (b->getOrderQty() >= 0))
+                    if (min(a->getOrderQty(),b->getOrderQty()) >= 0)
                         return b->getOrderQty() > a->getOrderQty();
             }
 			if (a->getRankTime() != b->getRankTime())
-				if ( (a->getRankTime() >= 0) && (b->getRankTime() >= 0))
+                if (min(a->getRankTime(),b->getRankTime()) >= 0)
 				    return a->getRankTime() < b->getRankTime();
 
 			return a->d_row < b->d_row;
@@ -133,7 +132,7 @@ class OrderLookup : public DomainObjectBase<OrderLookup>
 		static bool ownerBookIndex(const OrderLookup* a,  const OrderLookup* b)
 		{
 			if (a->getSymbolId() != b->getSymbolId())
-                if (a->getSymbolId() >= 0 && b->getSymbolId() >= 0)
+                if (min(a->getSymbolId(),b->getSymbolId()) >= 0)
     				return a->getSymbolId() < b->getSymbolId();
 
             int i = a->getSide().compareForIndex(b->getSide());
@@ -143,7 +142,7 @@ class OrderLookup : public DomainObjectBase<OrderLookup>
             if (i != 0) return i < 0;
 
 			if (a->getFirmId() != b->getFirmId())
-				if ( (a->getFirmId() >= 0) && (b->getFirmId() >= 0))
+                if (min(a->getFirmId(),b->getFirmId()) >= 0)
 				    return a->getFirmId() < b->getFirmId();
 
 			if (a->getClientType().compareForIndex(ClientType_t::INVESTOR) == 0) {
@@ -153,11 +152,11 @@ class OrderLookup : public DomainObjectBase<OrderLookup>
                 if (i != 0) return i > 0;
             } else {
                 if (a->getOrderQty() != b->getOrderQty())
-				    if ( (a->getOrderQty() >= 0) && (b->getOrderQty() >= 0))
+                    if (min(a->getOrderQty(),b->getOrderQty()) >= 0)
                         return b->getOrderQty() > a->getOrderQty();
             }
 			if (a->getRankTime() != b->getRankTime())
-				if ( (a->getRankTime() >= 0) && (b->getRankTime() >= 0))
+                if (min(a->getRankTime(),b->getRankTime()) >= 0)
 				    return a->getRankTime() < b->getRankTime();
 
 			return a->d_row < b->d_row;
@@ -166,11 +165,11 @@ class OrderLookup : public DomainObjectBase<OrderLookup>
 		static bool cancelIndex(const OrderLookup* a,  const OrderLookup* b)
 		{
 			if (a->getSenderCompId() != b->getSenderCompId())
-				if ( (a->getSenderCompId() != -1) && (b->getSenderCompId() != -1))
+                if (min(a->getSenderCompId(),b->getSenderCompId()) >= 0)
 					return a->getSenderCompId() < b->getSenderCompId();
 
 			if (a->getDeliverToCompId() != b->getDeliverToCompId())
-				if ( (a->getDeliverToCompId() != -1) && (b->getDeliverToCompId() != -1))
+                if (min(a->getDeliverToCompId(),b->getDeliverToCompId()) >= 0)
 					return a->getDeliverToCompId() < b->getDeliverToCompId();
 
 			return a->d_row < b->d_row;
@@ -179,7 +178,7 @@ class OrderLookup : public DomainObjectBase<OrderLookup>
 		static bool clOrdIdIndex(const OrderLookup* a,  const OrderLookup* b)
 		{
             if (a->getDeliverToCompId() != b->getDeliverToCompId())
-				if ( (a->getDeliverToCompId() != -1) && (b->getDeliverToCompId() != -1))
+                if (min(a->getDeliverToCompId(),b->getDeliverToCompId()) >= 0)
                     return a->getDeliverToCompId() < b->getDeliverToCompId();
 			int i = a->getClOrdId().compareForIndex(b->getClOrdId());
 			if ( i != 0 ) return (i < 0);
@@ -189,14 +188,14 @@ class OrderLookup : public DomainObjectBase<OrderLookup>
 		static bool conditionalIndex(const OrderLookup* a,  const OrderLookup* b)
 		{
 			if (a->getSymbolId() != b->getSymbolId())
-				if ( (a->getSymbolId() != -1) && (b->getSymbolId() != -1))
+                if (min(a->getSymbolId(),b->getSymbolId()) >= 0)
     				return a->getSymbolId() < b->getSymbolId();
 
             int i = a->getSide().compareForIndex(b->getSide());
             if (i != 0) return i < 0;
 
 			if (a->getInviteId() != b->getInviteId())
-				if ( (a->getInviteId() != -1) && (b->getInviteId() != -1))
+                if (min(a->getInviteId(),b->getInviteId()) >= 0)
 				    return a->getInviteId() < b->getInviteId();
 
 			return a->d_row < b->d_row;
@@ -237,7 +236,7 @@ class SymbolLookup : public DomainObjectBase<SymbolLookup>
         static bool primarykey(const SymbolLookup * a,  const SymbolLookup * b)
         {
             if ( a->getSymbolId() != b->getSymbolId() )
-                if ( a->getSymbolId() >= 0 && b->getSymbolId() >= 0 )
+                if (min(a->getSymbolId(),b->getSymbolId()) >= 0)
                     return ( a->getSymbolId() < b->getSymbolId() );
             return a->d_row < b->d_row;
         };
@@ -285,7 +284,7 @@ class FirmLookup : public DomainObjectBase<FirmLookup>
         static bool primarykey(const FirmLookup * a,  const FirmLookup * b)
         {
             if ( a->getFirmId() != b->getFirmId() )
-                if (a->getFirmId() >= 0 && b->getFirmId() >= 0) 
+                if (min(a->getFirmId(),b->getFirmId()) >= 0)
                         return ( a->getFirmId() < b->getFirmId() );
             return a->d_row < b->d_row;
         };
@@ -301,7 +300,7 @@ class FirmLookup : public DomainObjectBase<FirmLookup>
             if (i != 0 ) return i < 0;
 
             if (a->getParentFirm() != b->getParentFirm())
-                if (a->getParentFirm() >= 0 && b->getParentFirm() >= 0) 
+                if (min(a->getParentFirm(),b->getParentFirm()) >= 0)
                     return a->getParentFirm() > b->getParentFirm();
 
             return a->d_row < b->d_row;
@@ -347,11 +346,11 @@ class ConfigLookup : public DomainObjectBase<ConfigLookup>
             if (i != 0) return i < 0;
 
             if ( a->getSymbolId() != b->getSymbolId() )
-                if ( a->getSymbolId() >= 0 && b->getSymbolId() >= 0 )
+                if (min(a->getSymbolId(),b->getSymbolId()) >= 0)
                     return ( a->getSymbolId() < b->getSymbolId() );
 
             if ( a->getFirmId() != b->getFirmId() )
-                if ( a->getFirmId() >= 0 && b->getFirmId() >= 0 )
+                if (min(a->getFirmId(),b->getFirmId()) >= 0)
                     return ( a->getFirmId() < b->getFirmId() );
 
             return a->d_row < b->d_row;
@@ -363,11 +362,11 @@ class ConfigLookup : public DomainObjectBase<ConfigLookup>
             if (i != 0) return i < 0;
 
             if ( a->getFirmId() != b->getFirmId() )
-                if ( a->getFirmId() >= 0 && b->getFirmId() >= 0 )
+                if (min(a->getFirmId(),b->getFirmId()) >= 0)
                     return ( a->getFirmId() < b->getFirmId() );
 
             if ( a->getSymbolId() != b->getSymbolId() )
-                if ( a->getSymbolId() >= 0 && b->getSymbolId() >= 0 )
+                if (min(a->getSymbolId(),b->getSymbolId()) >= 0)
                     return ( a->getSymbolId() < b->getSymbolId() );
 
             return a->d_row < b->d_row;
