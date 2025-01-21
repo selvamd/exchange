@@ -19,6 +19,7 @@ namespace exchange {
  */
 static const int32_t APP_VERSION_LENGTH                 = 10;
 static const int32_t COMP_ID_LENGTH                     = 10;
+static const int32_t CLORD_ID_LENGTH                    = 30;
 static const int32_t TRADE_ID_LENGTH                    = 20;
 static const int32_t SYMBOL_LENGTH                      = 40;
 static const int32_t FIRM_LENGTH                        = 10;

@@ -22,47 +22,58 @@ class OrderLookup : public DomainObjectBase<OrderLookup>
         OrderLookup(int i = -1, void * sBuff = NULL) : d_row(i), d_dbid(0) { clone(sBuff); }
     
         //Use DECLARE_INDEX if the data member is used to construct an index 
+        DECLARE_INDEX(int32_t,SenderCompId,0) //Gateway
+        //clordid index
+		DECLARE_INDEX(int32_t,DeliverToCompId,1) //Client Session
+        DECLARE_INDEX(FixedString<exchange::CLORD_ID_LENGTH+1>, ClOrdId, 2)
+		DECLARE_INDEX(int32_t, SymbolId, 3)
+		DECLARE_INDEX(EnumData<Side_t>, Side, 4)
+        //conditional index=symbol,side,inviteid
+		DECLARE_INDEX(int32_t, InviteId, 5)
+        //ownerindex = firmid + bookindex
+		DECLARE_INDEX(int32_t, FirmId, 6) //FIRMID
+        //bookindex = usertype,[urgency,contracategory,ranktime],[ranktier,orderqty,ranktime]
+		DECLARE_INDEX(EnumData<ClientType_t>, ClientType, 7)
+		DECLARE_INDEX(EnumData<OrderUrgency_t>, OrderUrgency, 8)
+		DECLARE_INDEX(EnumData<ContraCategory_t>, ContraCategory, 9)
+		DECLARE_INDEX(EnumData<RiskTier_t>, RiskTier, 10)
+		DECLARE_INDEX(int32_t, OrderQty, 11)
+		DECLARE_INDEX(int64_t, RankTime, 12)
+        //PRIMARYKEY
+		DECLARE_INDEX(int64_t, OrderId, 13)
 
-		DECLARE_INDEX(int32_t,SenderCompId,0)
-		DECLARE_INDEX(FixedString<exchange::COMP_ID_LENGTH+1>, SenderCompIdStr, 1)
-		DECLARE_INDEX(FixedString<exchange::COMP_ID_LENGTH+1>, DeliverToCompId, 2)
-		DECLARE_INDEX(FixedString<exchange::COMP_ID_LENGTH+1>, DeliverToLocationId, 3)
-		DECLARE_INDEX(int32_t, SymbolId, 4)
-		DECLARE_INDEX(int64_t, ClOrdId, 5)
-		DECLARE_INDEX(EnumData<Side_t>, Side, 6)
-		DECLARE_INDEX(int64_t, Price, 7)
-		DECLARE_INDEX(int64_t, RankTime, 8)
-		DECLARE_INDEX(int32_t, OrderId, 9)
-		DECLARE_INDEX(int32_t, PartyId, 10)
-		DECLARE_INDEX(int32_t, PartySubId, 11)
+		DECLARE_MEMBER(int32_t, PartyId, 14) //MPID
+        DECLARE_MEMBER(FixedString<exchange::COMP_ID_LENGTH+1>, PartySubId, 15) //SUBID
+		DECLARE_MEMBER(int64_t, ExecId, 16)
+		DECLARE_MEMBER(int64_t, Price, 17)
+		DECLARE_MEMBER(int64_t, ArrivalTime, 18)
+		DECLARE_MEMBER(EnumData<TimeInForce_t>, TimeInForce, 19)
+		DECLARE_MEMBER(EnumData<OrdType_t>, OrdType, 20)
+		DECLARE_MEMBER(EnumData<OrdStatus_t>, OrdStatus, 21)
+		DECLARE_MEMBER(EnumData<OrderLife_t>, OrderLife, 22)
+		DECLARE_MEMBER(EnumData<MinQtyInst_t>, MinQtyInst, 23)
+		DECLARE_MEMBER(EnumData<ConditionalEligible_t>, ConditionalEligible, 24)
+		DECLARE_MEMBER(EnumData<SelfTradeInst_t>, SelfTradeInst, 25)
+		DECLARE_MEMBER(EnumData<AutoCancel_t>, AutoCancel, 26)
+		DECLARE_MEMBER(int32_t, CumQty, 27)
+		DECLARE_MEMBER(int32_t, AvgPx, 28)
+		DECLARE_MEMBER(int32_t, MinQty, 29)
+		DECLARE_MEMBER(int32_t, LeavesQty, 30)
 
-		DECLARE_MEMBER(int32_t, Account, 12)
-		DECLARE_MEMBER(int32_t, MatcherId, 13)
-		DECLARE_MEMBER(EnumData<ExecInst_t>, ExecInst, 14)
-		DECLARE_MEMBER(EnumData<OrdType_t>, OrdType, 15)
-		DECLARE_MEMBER(EnumData<OpenClose_t>, OpenClose, 16)
-		DECLARE_MEMBER(EnumData<TimeInForce_t>, TimeInForce, 17)
-		DECLARE_MEMBER(EnumData<ClientType_t>, ClientType, 18)
-		DECLARE_MEMBER(EnumData<OrdStatus_t>, OrdStatus, 19)
-		DECLARE_MEMBER(EnumData<AutoCancel_t>, AutoCancel, 20)
-		DECLARE_MEMBER(int64_t, CumQty, 21)
-		DECLARE_MEMBER(int64_t, StopPx, 22)
-		DECLARE_MEMBER(int64_t, AvgPx, 23)
-		DECLARE_MEMBER(int64_t, OrderQty, 24)
-		DECLARE_MEMBER(int64_t, LeavesQty, 25)
-		DECLARE_MEMBER(int64_t, QuoteQty, 26)
-		DECLARE_MEMBER(int64_t, MaxFloor, 27)
-		DECLARE_MEMBER(int64_t, SendingTime, 28)
-		DECLARE_MEMBER(int64_t, ExpireTime, 29)
-		DECLARE_MEMBER(int32_t, NoTradingSessions, 30)
-		DECLARE_MEMBER(FixedString<exchange::TEXT_LENGTH+1>, OptionalData, 31)
-		DECLARE_MEMBER(FixedString<exchange::TRADE_SESSION_LENGTH+1>, TradingSessionId, 32)
-		DECLARE_MEMBER(int64_t, InsertionTimestamp, 33)
-		DECLARE_MEMBER(int64_t, ExecId, 34)
+		//DECLARE_INDEX(FixedString<exchange::COMP_ID_LENGTH+1>, SenderCompIdStr, 1)
+		//DECLARE_MEMBER(EnumData<ExecInst_t>, ExecInst, 14)
+		//DECLARE_MEMBER(EnumData<OpenClose_t>, OpenClose, 16)
+		//DECLARE_MEMBER(EnumData<ClientType_t>, ClientType, 18)
+		// DECLARE_MEMBER(int64_t, SendingTime, 28)
+		// DECLARE_MEMBER(int64_t, ExpireTime, 29)
+		// DECLARE_MEMBER(int32_t, NoTradingSessions, 30)
+		// DECLARE_MEMBER(FixedString<exchange::TEXT_LENGTH+1>, OptionalData, 31)
+		// DECLARE_MEMBER(FixedString<exchange::TRADE_SESSION_LENGTH+1>, TradingSessionId, 32)
+		// DECLARE_MEMBER(int64_t, InsertionTimestamp, 33)
 
-        static int maxFields()    { return 35; }
+        static int maxFields()    { return 31; }
         #define SET(FieldIndex) DECLARE_END(FieldIndex)
-        SET35()
+        SET31()
         #undef SET
                     
         const int d_row;
@@ -73,26 +84,18 @@ class OrderLookup : public DomainObjectBase<OrderLookup>
         static void createIndices(DomainTable<OrderLookup> &table)
         {
             table.addIndex("PrimaryKey", primaryKey);
-            table.addIndex("SessionIndex", sessionIndex);
-            table.addIndex("OwnerIndex", ownerIndex);
-            table.addIndex("ClordidIndex", clOrdIdIndex);
             table.addIndex("BookIndex", bookIndex);
+            table.addIndex("OwnerBookIndex", ownerBookIndex);
+
+            table.addIndex("ClordidIndex", clOrdIdIndex);
+            table.addIndex("ConditionalIndex", conditionalIndex);
+            table.addIndex("CancelIndex", cancelIndex);
         };
 
 		static bool primaryKey(const OrderLookup* a,  const OrderLookup* b)
 		{
 			if (a->getOrderId() != b->getOrderId())
 				return a->getOrderId() < b->getOrderId();
-			return a->d_row < b->d_row;
-		}
-
-		static bool clOrdIdIndex(const OrderLookup* a,  const OrderLookup* b)
-		{
-			int i = a->getDeliverToCompId().compareForIndex(b->getDeliverToCompId());
-			if ( i != 0 ) return (i < 0);
-			if (a->getClOrdId() != b->getClOrdId())
-				if ( (a->getClOrdId() != -1) && (b->getClOrdId() != -1))
-					return a->getClOrdId() < b->getClOrdId();
 			return a->d_row < b->d_row;
 		}
 
@@ -104,44 +107,94 @@ class OrderLookup : public DomainObjectBase<OrderLookup>
             int i = a->getSide().compareForIndex(b->getSide());
             if (i != 0) return i < 0;
 
-			if (a->getPrice() != b->getPrice()) 
-                return (a->getSide().compareForIndex(Side_t::SELL) == 0)? 
-                    a->getPrice() < b->getPrice() : a->getPrice() > b->getPrice();
+            i = a->getClientType().compareForIndex(b->getClientType());
+            if (i != 0) return i < 0;
 
-            //OrderId is internal, unique and monotonic and used as proxy for time rank
+			if (a->getClientType().compareForIndex(ClientType_t::INVESTOR) == 0) {
+                i = a->getOrderUrgency().compareForIndex(b->getOrderUrgency());
+                if (i != 0) return i > 0;
+                i = a->getContraCategory().compareForIndex(b->getContraCategory());
+                if (i != 0) return i > 0;
+            } else {
+                if (a->getOrderQty() < b->getOrderQty())
+                    return 1;
+                else if (a->getOrderQty() > b->getOrderQty())
+                    return -1;
+            }
 			if (a->getRankTime() != b->getRankTime())
 				return a->getRankTime() < b->getRankTime();
 
 			return a->d_row < b->d_row;
 		}
 
-		static bool ownerIndex(const OrderLookup* a,  const OrderLookup* b)
+        //Index used for lookup during self-trade and previous riskfill 
+		static bool ownerBookIndex(const OrderLookup* a,  const OrderLookup* b)
 		{
-			if (a->getPartyId() != b->getPartyId())
-				if ( (a->getPartyId() != -1) && (b->getPartyId() != -1))
-					return a->getPartyId() < b->getPartyId();
-			if (a->getPartySubId() != b->getPartySubId())
-				if ( (a->getPartySubId() != -1) && (b->getPartySubId() != -1))
-					return a->getPartySubId() < b->getPartySubId();
-			if (a->getOrderId() != b->getOrderId())
-				if ( (a->getOrderId() != -1) && (b->getOrderId() != -1))
-					return a->getOrderId() < b->getOrderId();
+			if (a->getSymbolId() != b->getSymbolId())
+				return a->getSymbolId() < b->getSymbolId();
+
+            int i = a->getSide().compareForIndex(b->getSide());
+            if (i != 0) return i < 0;
+
+            i = a->getClientType().compareForIndex(b->getClientType());
+            if (i != 0) return i < 0;
+
+			if (a->getFirmId() != b->getFirmId())
+				return a->getFirmId() < b->getFirmId();
+
+			if (a->getClientType().compareForIndex(ClientType_t::INVESTOR) == 0) {
+                i = a->getOrderUrgency().compareForIndex(b->getOrderUrgency());
+                if (i != 0) return i > 0;
+                i = a->getContraCategory().compareForIndex(b->getContraCategory());
+                if (i != 0) return i > 0;
+            } else {
+                if (a->getOrderQty() < b->getOrderQty())
+                    return 1;
+                else if (a->getOrderQty() > b->getOrderQty())
+                    return -1;
+            }
+			if (a->getRankTime() != b->getRankTime())
+				return a->getRankTime() < b->getRankTime();
+
 			return a->d_row < b->d_row;
 		}
 
-		static bool sessionIndex(const OrderLookup* a,  const OrderLookup* b)
+		static bool cancelIndex(const OrderLookup* a,  const OrderLookup* b)
 		{
-			if (a->getMatcherId() != b->getMatcherId())
-				if ( (a->getMatcherId() != -1) && (b->getMatcherId() != -1))
-					return a->getMatcherId() < b->getMatcherId();
 			if (a->getSenderCompId() != b->getSenderCompId())
 				if ( (a->getSenderCompId() != -1) && (b->getSenderCompId() != -1))
 					return a->getSenderCompId() < b->getSenderCompId();
-			int i = a->getDeliverToCompId().compareForIndex(b->getDeliverToCompId());
+
+			if (a->getDeliverToCompId() != b->getDeliverToCompId())
+				if ( (a->getDeliverToCompId() != -1) && (b->getDeliverToCompId() != -1))
+					return a->getDeliverToCompId() < b->getDeliverToCompId();
+
+			return a->d_row < b->d_row;
+		}
+
+		static bool clOrdIdIndex(const OrderLookup* a,  const OrderLookup* b)
+		{
+            if (a->getDeliverToCompId() != b->getDeliverToCompId())
+				if ( (a->getDeliverToCompId() != -1) && (b->getDeliverToCompId() != -1))
+                    return a->getDeliverToCompId() < b->getDeliverToCompId();
+			int i = a->getClOrdId().compareForIndex(b->getClOrdId());
 			if ( i != 0 ) return (i < 0);
 			return a->d_row < b->d_row;
 		}
 
+		static bool conditionalIndex(const OrderLookup* a,  const OrderLookup* b)
+		{
+			if (a->getSymbolId() != b->getSymbolId())
+				return a->getSymbolId() < b->getSymbolId();
+
+            int i = a->getSide().compareForIndex(b->getSide());
+            if (i != 0) return i < 0;
+
+			if (a->getInviteId() != b->getInviteId())
+				return a->getInviteId() < b->getInviteId();
+
+			return a->d_row < b->d_row;
+		}
 };
 
 class SymbolLookup : public DomainObjectBase<SymbolLookup>
@@ -202,7 +255,7 @@ class FirmLookup : public DomainObjectBase<FirmLookup>
         //Use DECLARE_INDEX if the data member is used to construct an index 
         DECLARE_INDEX(int64_t, FirmId, 0)
         DECLARE_INDEX(FixedString<20>, Name, 1)
-        DECLARE_MEMBER(EnumData<ClientType_t>, ClientType, 2)
+        DECLARE_MEMBER(EnumData<FirmType_t>, FirmType, 2)
         DECLARE_MEMBER(EnumData<EntityStatus_t>, EntityStatus, 3)
 
         static int maxFields()    { return 4; }
