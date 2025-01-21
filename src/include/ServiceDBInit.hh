@@ -33,6 +33,7 @@ template<> void printdb<Service_t::MATCHER>()
     std::cout << "Order count        : " << database.getRecordCount<OrderLookup>() << std::endl;
     std::cout << "Symbol count       : " << database.getRecordCount<SymbolLookup>() << std::endl;
     std::cout << "Firm count         : " << database.getRecordCount<FirmLookup>() << std::endl;
+    std::cout << "Config count       : " << database.getRecordCount<ConfigLookup>() << std::endl;
 }
 
 //Initialize memory and load the database
@@ -44,11 +45,13 @@ template<> void initdb<Service_t::MATCHER>()
     database.getTable<FirmLookup>(nullptr,1500*sizeof(FirmLookup));
     database.getTable<SymbolLookup>(nullptr,10000*sizeof(SymbolLookup));
     database.getTable<OrderLookup>(nullptr,1000000*sizeof(OrderLookup));
+    database.getTable<ConfigLookup>(nullptr,100000*sizeof(ConfigLookup));
 
     //loads the snapshot data
     database.load<FirmLookup>(dbfile);
     database.load<SymbolLookup>(dbfile);
     database.load<OrderLookup>(dbfile);
+    database.load<ConfigLookup>(dbfile);
 
     {
         //process db log to roll forward
@@ -77,6 +80,7 @@ template<> void closedb<Service_t::MATCHER>()
     database.store<OrderLookup>(dbfile);
     database.store<FirmLookup>(dbfile);
     database.store<SymbolLookup>(dbfile);
+    database.store<ConfigLookup>(dbfile);
 
     printdb<Service_t::MATCHER>();
 }
