@@ -29,6 +29,7 @@ struct GenMsg
     DECLARE_NUM_FIELD(seq_num, SeqNum, int64_t)
     DECLARE_STRING_FIELD(sender_comp_id, SenderCompId, exchange::COMP_ID_LENGTH)
     DECLARE_STRING_FIELD(target_comp_id, TargetCompId, exchange::COMP_ID_LENGTH)
+    DECLARE_NUM_FIELD(client_id, ClientId, int32_t)
 
     void reset()
     {
@@ -42,6 +43,7 @@ struct GenMsg
         msg_type = (exchange::ExchangeApiMsgType_t) ntohl((int32_t)msg_type);
         msg_size = ntohl(msg_size);
         seq_num = ntoh64(seq_num);
+        client_id = ntohl(client_id);
     }
 
     void hton()
@@ -49,6 +51,7 @@ struct GenMsg
         msg_type = (exchange::ExchangeApiMsgType_t) htonl((int32_t)msg_type);
         msg_size = htonl(msg_size);
         seq_num = hton64(seq_num);
+        client_id = htonl(client_id);
     }
 
     friend std::ostream & operator<<(std::ostream & out, const GenMsg& msg)
@@ -59,6 +62,137 @@ struct GenMsg
         msg.printSeqNum(out);
         msg.printSenderCompId(out);
         msg.printTargetCompId(out);
+        msg.printClientId(out);
+        return out;
+    }
+};
+
+struct NBBOMsg
+{
+    DECLARE_ENUM_FIELD(msg_type, MsgType, exchange::ExchangeApiMsgType_t)
+    DECLARE_NUM_FIELD(msg_size, MsgSize, int32_t)
+    DECLARE_NUM_FIELD(seq_num, SeqNum, int64_t)
+    DECLARE_STRING_FIELD(sender_comp_id, SenderCompId, exchange::COMP_ID_LENGTH)
+    DECLARE_STRING_FIELD(target_comp_id, TargetCompId, exchange::COMP_ID_LENGTH)
+    DECLARE_STRING_FIELD(symbol, Symbol, exchange::SYMBOL_LENGTH)
+    DECLARE_PRICE_FIELD(bid_price, BidPrice, int64_t, exchange::PRICE_SCALE)
+    DECLARE_PRICE_FIELD(ask_price, AskPrice, int64_t, exchange::PRICE_SCALE)
+    DECLARE_NUM_FIELD(bid_qty, BidQty, int64_t)
+    DECLARE_NUM_FIELD(ask_qty, AskQty, int64_t)
+
+    void reset()
+    {
+        memset((void *)this, 0, sizeof(*this));
+        msg_type = exchange::ExchangeApiMsgType_t::nbbo_msg;
+        msg_size = sizeof(*this);
+    }
+
+    void ntoh()
+    {
+        msg_type = (exchange::ExchangeApiMsgType_t) ntohl((int32_t)msg_type);
+        msg_size = ntohl(msg_size);
+        seq_num = ntoh64(seq_num);
+        bid_price = ntoh64(bid_price);
+        ask_price = ntoh64(ask_price);
+        bid_qty = ntoh64(bid_qty);
+        ask_qty = ntoh64(ask_qty);
+    }
+
+    void hton()
+    {
+        msg_type = (exchange::ExchangeApiMsgType_t) htonl((int32_t)msg_type);
+        msg_size = htonl(msg_size);
+        seq_num = hton64(seq_num);
+        bid_price = hton64(bid_price);
+        ask_price = hton64(ask_price);
+        bid_qty = hton64(bid_qty);
+        ask_qty = hton64(ask_qty);
+    }
+
+    friend std::ostream & operator<<(std::ostream & out, const NBBOMsg& msg)
+    {
+        out << "NBBOMsg";
+        msg.printMsgType(out);
+        msg.printMsgSize(out);
+        msg.printSeqNum(out);
+        msg.printSenderCompId(out);
+        msg.printTargetCompId(out);
+        msg.printSymbol(out);
+        msg.printBidPrice(out);
+        msg.printAskPrice(out);
+        msg.printBidQty(out);
+        msg.printAskQty(out);
+        return out;
+    }
+};
+
+struct TimerMsg
+{
+    DECLARE_ENUM_FIELD(msg_type, MsgType, exchange::ExchangeApiMsgType_t)
+    DECLARE_NUM_FIELD(msg_size, MsgSize, int32_t)
+    DECLARE_NUM_FIELD(seq_num, SeqNum, int64_t)
+    DECLARE_STRING_FIELD(sender_comp_id, SenderCompId, exchange::COMP_ID_LENGTH)
+    DECLARE_STRING_FIELD(target_comp_id, TargetCompId, exchange::COMP_ID_LENGTH)
+    DECLARE_ENUM_FIELD(timer_event_type, TimerEventType, exchange::TimerEventType_t)
+    DECLARE_NUM_FIELD(order_id, OrderId, int64_t)
+    DECLARE_NUM_FIELD(symbol_id, SymbolId, int32_t)
+    DECLARE_NUM_FIELD(sub_id, SubId, int32_t)
+    DECLARE_NUM_FIELD(risk_provider_id, RiskProviderId, int32_t)
+    DECLARE_ENUM_FIELD(side, Side, exchange::Side_t)
+    DECLARE_NUM_FIELD(invite_id, InviteId, int64_t)
+
+    void reset()
+    {
+        memset((void *)this, 0, sizeof(*this));
+        msg_type = exchange::ExchangeApiMsgType_t::timer_msg;
+        msg_size = sizeof(*this);
+    }
+
+    void ntoh()
+    {
+        msg_type = (exchange::ExchangeApiMsgType_t) ntohl((int32_t)msg_type);
+        msg_size = ntohl(msg_size);
+        seq_num = ntoh64(seq_num);
+        order_id = ntoh64(order_id);
+        invite_id = ntoh64(invite_id);
+        timer_event_type = (exchange::TimerEventType_t) ntohl((int32_t)timer_event_type);
+        side = (exchange::Side_t) ntohl((int32_t)side);
+        symbol_id = ntohl(symbol_id);
+        sub_id = ntohl(sub_id);
+        risk_provider_id = ntohl(risk_provider_id);
+
+    }
+
+    void hton()
+    {
+        msg_type = (exchange::ExchangeApiMsgType_t) htonl((int32_t)msg_type);
+        msg_size = htonl(msg_size);
+        seq_num = hton64(seq_num);
+         order_id = hton64(order_id);
+        invite_id = hton64(invite_id);
+        timer_event_type = (exchange::TimerEventType_t) htonl((int32_t)timer_event_type);
+        side = (exchange::Side_t) htonl((int32_t)side);
+        symbol_id = htonl(symbol_id);
+        sub_id = htonl(sub_id);
+        risk_provider_id = htonl(risk_provider_id);
+   }
+
+    friend std::ostream & operator<<(std::ostream & out, const TimerMsg& msg)
+    {
+        out << "TimerMsg";
+        msg.printMsgType(out);
+        msg.printMsgSize(out);
+        msg.printSeqNum(out);
+        msg.printSenderCompId(out);
+        msg.printTargetCompId(out);
+        msg.printTimerEventType(out);
+        msg.printOrderId(out);
+        msg.printSymbolId(out);
+        msg.printSubId(out);
+        msg.printRiskProviderId(out);
+        msg.printSide(out);
+        msg.printInviteId(out);
+
         return out;
     }
 };

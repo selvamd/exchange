@@ -152,6 +152,8 @@ static const std::string EXPIRED_TRADE_STATUS_STRING  = "EXPIRED";
  enum class ExchangeApiMsgType_t
  {
     gen_msg = 0,
+    nbbo_msg,
+    timer_msg,
     new_order,
     replace_order,
     cancel,
@@ -189,6 +191,13 @@ enum class CancelType_t
 {
     AUTO_CANCEL_ONLY,
     CANCEL_ALL_ORDERS
+};
+
+enum class TimerEventType_t
+{
+    MRI_WAIT,
+    CO_WAIT,
+    PRF_TIMER    
 };
 
 enum class AssetCategory_t
@@ -353,6 +362,8 @@ static std::vector<std::string> & getEnumVector(ExchangeApiMsgType_t val)
 {
     static std::vector<std::string> vec {  
                            "x-genmsg",
+                           "N-nbbo_msg",
+                           "T-timer_msg",
                            "D-new_order",
                            "G-replace_order",
                            "F-cancel",
@@ -365,6 +376,12 @@ static std::vector<std::string> & getEnumVector(ExchangeApiMsgType_t val)
 static std::vector<std::string> & getEnumVector(ClientType_t val)
 {
     static std::vector<std::string> vec  {"0-CUSTOMER","1-FIRM","2-BROKER","3-DEALER"};
+    return vec;
+}
+
+static std::vector<std::string> & getEnumVector(TimerEventType_t val)
+{
+    static std::vector<std::string> vec  {"0-MRI_WAIT","1-CO_WAIT","2-PRF_TIMER"};
     return vec;
 }
 
