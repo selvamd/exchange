@@ -9,6 +9,8 @@
 #include <unistd.h>
 //#include "ServiceDBInit.hh"
 #include "context.hpp"
+#include "request_handlers.hh"
+
 #include "ux_selector.hh"
 #include "api_SocketStreamer.hh"
 #include <csignal>
@@ -20,22 +22,6 @@ void signalHandler( int signum ) {
 }
 
 ux_selector *server = nullptr;
-typedef void (*HandlerFunction)(const context &ctx);
-HandlerFunction handler[15];
-
-void processNewOrder(const context &ctx) {
-    //std::cout << ClientId << "," << "processNewOrder" << std::endl;
-}
-
-// void processGenMsg(const int &ClientId, exchange_api::ExchangeApiUnion *req, exchange_api::ExchangeApiUnion *res) {
-//     std::cout << ClientId << "," << "genmsg" << std::endl;
-// }
-
-void initHandler()
-{
-    //handler[(int)exchange::ExchangeApiMsgType_t::gen_msg]   = processGenMsg;
-    handler[(int)exchange::ExchangeApiMsgType_t::new_order] = processNewOrder;
-}
 
 int processRequests(context& ctx)
 {
