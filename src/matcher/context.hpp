@@ -12,8 +12,8 @@ class context
 {
   public:
 
-    void beginTransaction() {
-    }
+    // void beginTransaction() {
+    // }
 
     // bool hasResponse() 
     // {
