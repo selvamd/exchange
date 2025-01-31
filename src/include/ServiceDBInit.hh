@@ -17,12 +17,13 @@ using namespace std;
 #include "DomainDBListeners.hh"
 #include "Enums.hh"
 #include "MatcherDomainObjects.hh"
+#include "context.hh"
 
-const std::string DATA_DIR = "../data/"; 
-DomainDB &database = DomainDB::instance(1);
-DBFileSerializer dbwriter("matcher.db");
-char bufSerializer[1500];
-char bufLogger[8192];
+// const std::string DATA_DIR = "../data/"; 
+// DomainDB &database = DomainDB::instance(1);
+// DBFileSerializer dbwriter("matcher.db");
+// char bufSerializer[1500];
+// char bufLogger[8192];
 
 template<Service_t> void printdb() {}
 template<Service_t> void initdb() {}
@@ -30,6 +31,7 @@ template<Service_t> void closedb() {}
 
 template<> void printdb<Service_t::MATCHER>()
 {
+    DomainDB &database = ctx.database();
     std::cout << "Order count        : " << database.getRecordCount<OrderLookup>() << std::endl;
     std::cout << "Symbol count       : " << database.getRecordCount<SymbolLookup>() << std::endl;
     std::cout << "Firm count         : " << database.getRecordCount<FirmLookup>() << std::endl;
@@ -37,11 +39,12 @@ template<> void printdb<Service_t::MATCHER>()
 }
 
 //Initialize memory and load the database
-template<> void initdb<Service_t::MATCHER>()
+template<> void initdb<Service_t::MATCHER>(context &ctx)
 {
     std::string dbfile = DATA_DIR;
     dbfile.append("matcher.dat");
     
+    DomainDB &database = ctx.database();
     database.getTable<FirmLookup>(nullptr,1500*sizeof(FirmLookup));
     database.getTable<SymbolLookup>(nullptr,10000*sizeof(SymbolLookup));
     database.getTable<OrderLookup>(nullptr,1000000*sizeof(OrderLookup));
@@ -70,6 +73,7 @@ template<> void initdb<Service_t::MATCHER>()
 //Bkup the database
 template<> void closedb<Service_t::MATCHER>()
 {
+    DomainDB &database = ctx.database();
     //removes any old bakups first
     std::string dbfile = DATA_DIR;
     dbfile.append("matcher.dat");

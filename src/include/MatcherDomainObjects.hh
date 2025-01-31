@@ -26,7 +26,7 @@ class OrderLookup : public DomainObjectBase<OrderLookup>
         //clordid index
 		DECLARE_INDEX(int32_t,DeliverToCompId,1) //Client Session
         DECLARE_INDEX(FixedString<exchange::CLORD_ID_LENGTH+1>, ClOrdId, 2)
-		DECLARE_INDEX(int32_t, SymbolId, 3)
+		DECLARE_INDEX(int32_t, SymbolIdx, 3)
 		DECLARE_INDEX(EnumData<Side_t>, Side, 4)
         //conditional index=symbol,side,inviteid
 		DECLARE_INDEX(int32_t, InviteId, 5)
@@ -38,7 +38,7 @@ class OrderLookup : public DomainObjectBase<OrderLookup>
 		DECLARE_INDEX(EnumData<ContraCategory_t>, ContraCategory, 9)
 		DECLARE_INDEX(EnumData<RiskTier_t>, RiskTier, 10)
 		DECLARE_INDEX(int32_t, OrderQty, 11)
-		DECLARE_INDEX(int64_t, RankTime, 12)
+		DECLARE_INDEX(Timestamp, RankTime, 12)
         //PRIMARYKEY
 		DECLARE_INDEX(int64_t, OrderId, 13)
 
@@ -89,6 +89,7 @@ class OrderLookup : public DomainObjectBase<OrderLookup>
             table.addIndex("ClordidIndex", clOrdIdIndex);
             table.addIndex("ConditionalIndex", conditionalIndex);
             table.addIndex("CancelIndex", cancelIndex);
+            table.addIndex("RiskOffsetIndex", timeIndex);
         };
 
 		static bool primaryKey(const OrderLookup* a,  const OrderLookup* b)
@@ -101,9 +102,9 @@ class OrderLookup : public DomainObjectBase<OrderLookup>
 
 		static bool bookIndex(const OrderLookup* a,  const OrderLookup* b)
 		{
-			if (a->getSymbolId() != b->getSymbolId())
-                if (min(a->getSymbolId(),b->getSymbolId()) >= 0)
-    				return a->getSymbolId() < b->getSymbolId();
+			if (a->getSymbolIdx() != b->getSymbolIdx())
+                if (min(a->getSymbolIdx(),b->getSymbolIdx()) >= 0)
+    				return a->getSymbolIdx() < b->getSymbolIdx();
 
             int i = a->getSide().compareForIndex(b->getSide());
             if (i != 0) return i < 0;
@@ -117,13 +118,14 @@ class OrderLookup : public DomainObjectBase<OrderLookup>
                 i = a->getContraCategory().compareForIndex(b->getContraCategory());
                 if (i != 0) return i > 0;
             } else {
+                i = a->getRiskTier().compareForIndex(b->getRiskTier());
+                if (i != 0) return i > 0;
                 if (a->getOrderQty() != b->getOrderQty())
                     if (min(a->getOrderQty(),b->getOrderQty()) >= 0)
                         return b->getOrderQty() > a->getOrderQty();
             }
-			if (a->getRankTime() != b->getRankTime())
-                if (min(a->getRankTime(),b->getRankTime()) >= 0)
-				    return a->getRankTime() < b->getRankTime();
+            i = a->getRankTime().compareForIndex(b->getRankTime());
+            if (i != 0) return i < 0;
 
 			return a->d_row < b->d_row;
 		};
@@ -131,9 +133,9 @@ class OrderLookup : public DomainObjectBase<OrderLookup>
         //Index used for lookup during self-trade and previous riskfill 
 		static bool ownerBookIndex(const OrderLookup* a,  const OrderLookup* b)
 		{
-			if (a->getSymbolId() != b->getSymbolId())
-                if (min(a->getSymbolId(),b->getSymbolId()) >= 0)
-    				return a->getSymbolId() < b->getSymbolId();
+			if (a->getSymbolIdx() != b->getSymbolIdx())
+                if (min(a->getSymbolIdx(),b->getSymbolIdx()) >= 0)
+    				return a->getSymbolIdx() < b->getSymbolIdx();
 
             int i = a->getSide().compareForIndex(b->getSide());
             if (i != 0) return i < 0;
@@ -151,22 +153,43 @@ class OrderLookup : public DomainObjectBase<OrderLookup>
                 i = a->getContraCategory().compareForIndex(b->getContraCategory());
                 if (i != 0) return i > 0;
             } else {
+                i = a->getRiskTier().compareForIndex(b->getRiskTier());
+                if (i != 0) return i > 0;
                 if (a->getOrderQty() != b->getOrderQty())
                     if (min(a->getOrderQty(),b->getOrderQty()) >= 0)
                         return b->getOrderQty() > a->getOrderQty();
             }
-			if (a->getRankTime() != b->getRankTime())
-                if (min(a->getRankTime(),b->getRankTime()) >= 0)
-				    return a->getRankTime() < b->getRankTime();
+            i = a->getRankTime().compareForIndex(b->getRankTime());
+            if (i != 0) return i < 0;
+
+			return a->d_row < b->d_row;
+		};
+
+        //Index used for lookup during self-trade and previous riskfill 
+		static bool timeIndex(const OrderLookup* a,  const OrderLookup* b)
+		{
+			if (a->getSymbolIdx() != b->getSymbolIdx())
+                if (min(a->getSymbolIdx(),b->getSymbolIdx()) >= 0)
+    				return a->getSymbolIdx() < b->getSymbolIdx();
+
+            int i = a->getSide().compareForIndex(b->getSide());
+            if (i != 0) return i < 0;
+
+            //Get RiskProvider before Investor for this index
+            i = a->getClientType().compareForIndex(b->getClientType());
+            if (i != 0) return i > 0;
+
+            i = a->getRankTime().compareForIndex(b->getRankTime());
+            if (i != 0) return i < 0;
 
 			return a->d_row < b->d_row;
 		};
 
 		static bool cancelIndex(const OrderLookup* a,  const OrderLookup* b)
 		{
-			if (a->getSenderCompId() != b->getSenderCompId())
-                if (min(a->getSenderCompId(),b->getSenderCompId()) >= 0)
-					return a->getSenderCompId() < b->getSenderCompId();
+			if (a->getSymbolIdx() != b->getSymbolIdx())
+                if (min(a->getSymbolIdx(),b->getSymbolIdx()) >= 0)
+    				return a->getSymbolIdx() < b->getSymbolIdx();
 
 			if (a->getDeliverToCompId() != b->getDeliverToCompId())
                 if (min(a->getDeliverToCompId(),b->getDeliverToCompId()) >= 0)
@@ -187,16 +210,16 @@ class OrderLookup : public DomainObjectBase<OrderLookup>
 
 		static bool conditionalIndex(const OrderLookup* a,  const OrderLookup* b)
 		{
-			if (a->getSymbolId() != b->getSymbolId())
-                if (min(a->getSymbolId(),b->getSymbolId()) >= 0)
-    				return a->getSymbolId() < b->getSymbolId();
-
-            int i = a->getSide().compareForIndex(b->getSide());
-            if (i != 0) return i < 0;
+			if (a->getSymbolIdx() != b->getSymbolIdx())
+                if (min(a->getSymbolIdx(),b->getSymbolIdx()) >= 0)
+    				return a->getSymbolIdx() < b->getSymbolIdx();
 
 			if (a->getInviteId() != b->getInviteId())
                 if (min(a->getInviteId(),b->getInviteId()) >= 0)
 				    return a->getInviteId() < b->getInviteId();
+
+            int i = a->getSide().compareForIndex(b->getSide());
+            if (i != 0) return i < 0;
 
 			return a->d_row < b->d_row;
 		};
@@ -212,13 +235,15 @@ class SymbolLookup : public DomainObjectBase<SymbolLookup>
         SymbolLookup(int i = -1, void * sBuff = NULL) : d_row(i), d_dbid(0) { clone(sBuff); }
     
         //Use DECLARE_INDEX if the data member is used to construct an index 
-        DECLARE_INDEX(int64_t, SymbolId,            0)
-        DECLARE_INDEX(FixedString<20>, Name,        1)
-        DECLARE_MEMBER(EnumData<EntityStatus_t>, EntityStatus, 2)
+        DECLARE_INDEX(FixedString<20>, Name, 0)
+        DECLARE_MEMBER(EnumData<SymbolStatus_t>, SymbolStatus, 1)
+        DECLARE_MEMBER(int64_t, TransactionNumber, 2)
+        DECLARE_MEMBER(int32_t, NBBOBidPx, 3)
+        DECLARE_MEMBER(int32_t, NBBOAskPx, 4)
 
-        static int maxFields()    { return 3; }
+        static int maxFields()    { return 5; }
         #define SET(FieldIndex) DECLARE_END(FieldIndex)
-        SET3()
+        SET5()
         #undef SET
                     
         const int d_row;
@@ -230,22 +255,101 @@ class SymbolLookup : public DomainObjectBase<SymbolLookup>
         static void createIndices(DomainTable<SymbolLookup> &table)
         {
             table.addIndex("PrimaryKey", primarykey);
-            table.addIndex("TickerKey", tickerKey);
         };
 
         static bool primarykey(const SymbolLookup * a,  const SymbolLookup * b)
         {
-            if ( a->getSymbolId() != b->getSymbolId() )
-                if (min(a->getSymbolId(),b->getSymbolId()) >= 0)
-                    return ( a->getSymbolId() < b->getSymbolId() );
-            return a->d_row < b->d_row;
-        };
-
-        static bool tickerKey(const SymbolLookup * a,  const SymbolLookup * b)
-        {
             int i = a->getName().compareForIndex(b->getName());
             return (i == 0 )? a->d_row < b->d_row : i < 0;
         };
+
+};
+
+class OrderEvent : public DomainObjectBase<OrderEvent>
+{
+    public:
+    
+        friend DomainTable<OrderEvent>;
+        static int TableID() { return static_cast<int>(DomainObjects_t::ORDEREVENT); }
+        static string TableName() { return "OrderEvent"; }
+        OrderEvent(int i = -1, void * sBuff = NULL) : d_row(i), d_dbid(0) { clone(sBuff); }
+    
+        //Use DECLARE_INDEX if the data member is used to construct an index 
+        DECLARE_INDEX(int32_t, OrdIdx, 0)
+        DECLARE_INDEX(EnumData<OrderEventType_t>, EventType, 1)
+		DECLARE_MEMBER(int64_t, ExecId, 2)
+		DECLARE_MEMBER(int64_t, TradePrice, 3)
+		DECLARE_MEMBER(int32_t, TradeQty, 4)
+		DECLARE_MEMBER(int32_t, PostFillCumQty, 5)
+		DECLARE_MEMBER(int32_t, PostFillLeavesQty, 6)
+		DECLARE_MEMBER(EnumData<OrdStatus_t>, OrdStatus, 7)
+
+        static int maxFields()    { return 8; }
+        #define SET(FieldIndex) DECLARE_END(FieldIndex)
+        SET8()
+        #undef SET
+                    
+        const int d_row;
+        const uint32_t d_dbid;
+    
+    private:
+        //Called during table construction to create indexes 
+        static void createIndices(DomainTable<OrderEvent> &table)
+        {
+            table.addIndex("PrimaryKey", primaryKey);
+        };
+
+		static bool primaryKey(const OrderEvent* a,  const OrderEvent* b)
+		{
+			if (a->getOrdIdx() != b->getOrdIdx())
+                if (min(a->getOrdIdx(),b->getOrdIdx()) >= 0)
+    				return a->getOrdIdx() < b->getOrdIdx();
+            int i = a->getEventType().compareForIndex(b->getEventType());
+            if (i != 0) return i < 0;
+			return a->d_row < b->d_row;
+		};
+};
+
+class TimerEvent : public DomainObjectBase<TimerEvent>
+{
+    public:
+    
+        friend DomainTable<TimerEvent>;
+        static int TableID() { return static_cast<int>(DomainObjects_t::TIMEREVENT); }
+        static string TableName() { return "TimerEvent"; }
+        TimerEvent(int i = -1, void * sBuff = NULL) : d_row(i), d_dbid(0) { clone(sBuff); }
+    
+        //Use DECLARE_INDEX if the data member is used to construct an index 
+        DECLARE_INDEX(Timestamp, EventTime, 0)
+        DECLARE_MEMBER(EnumData<TimerEventType_t>, EventType, 1)
+		DECLARE_MEMBER(int32_t, OrdIdx, 2)
+		DECLARE_MEMBER(int32_t, SubIDIdx, 3)
+		DECLARE_MEMBER(int32_t, PrfMpidIdx, 4)
+		DECLARE_MEMBER(int32_t, SymbolIdx, 5)
+        DECLARE_MEMBER(EnumData<Side_t>, Side, 6)
+		DECLARE_MEMBER(int32_t, InviteID, 7)
+
+        static int maxFields()    { return 8; }
+        #define SET(FieldIndex) DECLARE_END(FieldIndex)
+        SET8()
+        #undef SET
+                    
+        const int d_row;
+        const uint32_t d_dbid;
+    
+    private:
+        //Called during table construction to create indexes 
+        static void createIndices(DomainTable<TimerEvent> &table)
+        {
+            table.addIndex("PrimaryKey", primaryKey);
+        };
+
+		static bool primaryKey(const TimerEvent* a,  const TimerEvent* b)
+		{
+            int i = a->getEventTime().compareForIndex(b->getEventTime());
+            if (i != 0) return i < 0;
+			return a->d_row < b->d_row;
+		};
 };
 
 class FirmLookup : public DomainObjectBase<FirmLookup>
@@ -322,10 +426,11 @@ class ConfigLookup : public DomainObjectBase<ConfigLookup>
         DECLARE_INDEX(int64_t, SymbolId,      1)
         DECLARE_INDEX(int64_t, FirmId,        2)
         DECLARE_MEMBER(int64_t, ConfigValue,  3)
+        DECLARE_MEMBER(int32_t, ConfigScale,  4)
 
-        static int maxFields()    { return 4; }
+        static int maxFields()    { return 5; }
         #define SET(FieldIndex) DECLARE_END(FieldIndex)
-        SET4()
+        SET5()
         #undef SET
                     
         const int d_row;

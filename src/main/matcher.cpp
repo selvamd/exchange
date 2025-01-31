@@ -7,10 +7,12 @@
 #include <stdio.h>
 #include <iomanip>
 #include <unistd.h>
-#include "ServiceDBInit.hh"
+//#include "ServiceDBInit.hh"
+#include "context.hpp"
 #include "ux_selector.hh"
 #include "api_SocketStreamer.hh"
 #include <csignal>
+#include <cstring>
 
 void signalHandler( int signum ) {
    cout << "Interrupt signal (" << signum << ") received.\n";
@@ -18,34 +20,28 @@ void signalHandler( int signum ) {
 }
 
 ux_selector *server = nullptr;
-typedef void (*HandlerFunction)(const int &, exchange_api::ExchangeApiUnion *, exchange_api::ExchangeApiUnion *);
+typedef void (*HandlerFunction)(const context &ctx);
 HandlerFunction handler[15];
 
-void processNewOrder(const int &ClientId, exchange_api::ExchangeApiUnion *req, exchange_api::ExchangeApiUnion *res) {
-    std::cout << ClientId << "," << "processNewOrder" << std::endl;
+void processNewOrder(const context &ctx) {
+    //std::cout << ClientId << "," << "processNewOrder" << std::endl;
 }
 
-void processGenMsg(const int &ClientId, exchange_api::ExchangeApiUnion *req, exchange_api::ExchangeApiUnion *res) {
-    std::cout << ClientId << "," << "genmsg" << std::endl;
-}
+// void processGenMsg(const int &ClientId, exchange_api::ExchangeApiUnion *req, exchange_api::ExchangeApiUnion *res) {
+//     std::cout << ClientId << "," << "genmsg" << std::endl;
+// }
 
 void initHandler()
 {
-    handler[(int)exchange::ExchangeApiMsgType_t::gen_msg]   = processGenMsg;
+    //handler[(int)exchange::ExchangeApiMsgType_t::gen_msg]   = processGenMsg;
     handler[(int)exchange::ExchangeApiMsgType_t::new_order] = processNewOrder;
 }
 
-int processRequests()
+int processRequests(context& ctx)
 {
     int iRC, iServerPort, iClientFD, iClientID;
-    exchange_api::ExchangeApiUnion * inmsg = nullptr;
-    exchange_api::ExchangeApiUnion * outmsg = nullptr;
-    //int maxmsgsize = sizeof(exchange_api::ExchangeApiUnion);
-    char request[4096];
-    char response[4096];
-    inmsg = (exchange_api::ExchangeApiUnion *) request;
-    outmsg = (exchange_api::ExchangeApiUnion *) response;
-
+    auto inmsg = ctx.request();
+    auto outmsg = ctx.response();
     server->PollForSocketEvent();
     while (true)
     {
@@ -59,30 +55,22 @@ int processRequests()
     
     while (true)
     {
-        memset(request, 0, 4096);
-        memset(response, 0, 4096);
-        iRC = server->Read(iClientID, request);
+        memset((void *)inmsg, 0, sizeof(inmsg));
+        memset((void *)outmsg, 0, sizeof(exchange_api::ExchangeApiUnion));
+        iRC = server->Read(iClientID, (char *)inmsg);
         if ( iRC == ux_selector::SUCCESS )
         {
             inmsg->ntoh();
             //Read and process the msg
             auto evtreq = inmsg->api_msg_type;
-            handler[(int)evtreq](iClientID, inmsg, outmsg);
-
-            // inmsg->gen_msg.reset();
-            // inmsg->gen_msg.setSeqNum(100);
-            // inmsg->gen_msg.setSenderCompId("selvamd");
-            // inmsg->gen_msg.setTargetCompId("selvamd");
-
-            // inmsg->hton();
-            // server->Write(iClientID, request, sizeof(exchange_api::GenMsg));
-            // server->flush();
+            handler[(int)evtreq](ctx);
         }
         else
         {
             return (iRC == ux_selector::END_OF_SOCK_LIST)? 0:-1;
         }
-        database.commit();
+        ctx.imdb.commit(); 
+        ctx.imdb.getTable<OrderEvent>().reset();
     }
     return 0;
 }
@@ -92,16 +80,19 @@ int main(int , char ** )
     signal(SIGINT, signalHandler);  
 
     initHandler();
-    initdb<Service_t::MATCHER>();
+    context ctx = context();
+    ctx.initdb();
+    //initdb<Service_t::MATCHER>(ctx);
 
     server = new ux_selector(20);
     server->AddServer(65000);
 
     while (true)
     {
-        int rc = processRequests();
+        int rc = processRequests(ctx);
         if (rc == -2) break;
     }
 
-    closedb<Service_t::MATCHER>();
+    ctx.closedb();
+    //closedb<Service_t::MATCHER>();
 }

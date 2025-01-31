@@ -77,7 +77,7 @@ struct NewOrderMsg
     DECLARE_STRING_FIELD(party_id, PartyId, exchange::COMP_ID_LENGTH)
     DECLARE_STRING_FIELD(party_sub_id, PartySubId, exchange::COMP_ID_LENGTH)
     DECLARE_STRING_FIELD(account, Account, exchange::COMP_ID_LENGTH)
-    DECLARE_NUM_FIELD(cl_ord_id, ClOrdId, int64_t)
+    DECLARE_STRING_FIELD(cl_ord_id, ClOrdId, exchange::CLORD_ID_LENGTH)
     DECLARE_ENUM_FIELD(exec_inst, ExecInst, exchange::ExecInst_t)
     DECLARE_NUM_FIELD(order_qty, OrderQty, int64_t)
     DECLARE_ENUM_FIELD(ord_type, OrdType, exchange::OrdType_t)
@@ -107,7 +107,6 @@ struct NewOrderMsg
         msg_type = (exchange::ExchangeApiMsgType_t) ntohl((int32_t)msg_type);
         msg_size = ntohl(msg_size);
         seq_num = ntoh64(seq_num);
-        cl_ord_id = ntoh64(cl_ord_id);
         exec_inst = (exchange::ExecInst_t) ntohl((int32_t)exec_inst);
         order_qty = ntoh64(order_qty);
         ord_type = (exchange::OrdType_t) ntohl((int32_t)ord_type);
@@ -129,7 +128,6 @@ struct NewOrderMsg
         msg_type = (exchange::ExchangeApiMsgType_t) htonl((int32_t)msg_type);
         msg_size = htonl(msg_size);
         seq_num = hton64(seq_num);
-        cl_ord_id = hton64(cl_ord_id);
         exec_inst = (exchange::ExecInst_t) htonl((int32_t)exec_inst);
         order_qty = hton64(order_qty);
         ord_type = (exchange::OrdType_t) htonl((int32_t)ord_type);
@@ -196,7 +194,7 @@ struct ReplaceOrderMsg
     DECLARE_STRING_FIELD(party_id, PartyId, exchange::COMP_ID_LENGTH)
     DECLARE_STRING_FIELD(party_sub_id, PartySubId, exchange::COMP_ID_LENGTH)
     DECLARE_STRING_FIELD(account, Account, exchange::COMP_ID_LENGTH)
-    DECLARE_NUM_FIELD(cl_ord_id, ClOrdId, int64_t)
+    DECLARE_STRING_FIELD(cl_ord_id, ClOrdId, exchange::CLORD_ID_LENGTH)
     DECLARE_ENUM_FIELD(exec_inst, ExecInst, exchange::ExecInst_t)
     DECLARE_NUM_FIELD(order_qty, OrderQty, int64_t)
     DECLARE_ENUM_FIELD(ord_type, OrdType, exchange::OrdType_t)
@@ -214,7 +212,7 @@ struct ReplaceOrderMsg
     DECLARE_STRING_FIELD(trading_session_id, TradingSessionId, exchange::TRADE_SESSION_LENGTH)
     DECLARE_NUM_FIELD(no_trading_sessions, NoTradingSessions, int32_t)
     DECLARE_NUM_FIELD(order_id, OrderId, int64_t)
-    DECLARE_NUM_FIELD(orig_cl_ord_id, OrigClOrdId, int64_t)
+    DECLARE_STRING_FIELD(oorig_cl_ord_id, OrigClOrdId, exchange::CLORD_ID_LENGTH)
 
     void reset()
     {
@@ -228,7 +226,6 @@ struct ReplaceOrderMsg
         msg_type = (exchange::ExchangeApiMsgType_t) ntohl((int32_t)msg_type);
         msg_size = ntohl(msg_size);
         seq_num = ntoh64(seq_num);
-        cl_ord_id = ntoh64(cl_ord_id);
         exec_inst = (exchange::ExecInst_t) ntohl((int32_t)exec_inst);
         order_qty = ntoh64(order_qty);
         ord_type = (exchange::OrdType_t) ntohl((int32_t)ord_type);
@@ -244,7 +241,6 @@ struct ReplaceOrderMsg
         client_type = (exchange::ClientType_t) ntohl((int32_t)client_type);
         no_trading_sessions = ntohl(no_trading_sessions);
         order_id = ntoh64(order_id);
-        orig_cl_ord_id = ntoh64(orig_cl_ord_id);
     }
 
     void hton()
@@ -252,7 +248,6 @@ struct ReplaceOrderMsg
         msg_type = (exchange::ExchangeApiMsgType_t) htonl((int32_t)msg_type);
         msg_size = htonl(msg_size);
         seq_num = hton64(seq_num);
-        cl_ord_id = hton64(cl_ord_id);
         exec_inst = (exchange::ExecInst_t) htonl((int32_t)exec_inst);
         order_qty = hton64(order_qty);
         ord_type = (exchange::OrdType_t) htonl((int32_t)ord_type);
@@ -268,7 +263,6 @@ struct ReplaceOrderMsg
         client_type = (exchange::ClientType_t) htonl((int32_t)client_type);
         no_trading_sessions = htonl(no_trading_sessions);
         order_id = hton64(order_id);
-        orig_cl_ord_id = hton64(orig_cl_ord_id);
     }
 
     friend std::ostream & operator<<(std::ostream & out, const ReplaceOrderMsg& msg)
@@ -322,12 +316,12 @@ struct CancelMsg
     DECLARE_STRING_FIELD(deliver_to_location_id, DeliverToLocationId, exchange::COMP_ID_LENGTH)
     DECLARE_STRING_FIELD(party_id, PartyId, exchange::COMP_ID_LENGTH)
     DECLARE_STRING_FIELD(party_sub_id, PartySubId, exchange::COMP_ID_LENGTH)
-    DECLARE_NUM_FIELD(cl_ord_id, ClOrdId, int64_t)
+    DECLARE_STRING_FIELD(cl_ord_id, ClOrdId, exchange::CLORD_ID_LENGTH)
     DECLARE_NUM_FIELD(sending_time, SendingTime, int64_t)
     DECLARE_STRING_FIELD(symbol, Symbol, exchange::SYMBOL_LENGTH)
     DECLARE_NUM_FIELD(poss_resend, PossResend, int32_t)
     DECLARE_NUM_FIELD(order_id, OrderId, int64_t)
-    DECLARE_NUM_FIELD(orig_cl_ord_id, OrigClOrdId, int64_t)
+    DECLARE_STRING_FIELD(orig_cl_ord_id, OrigClOrdId, exchange::CLORD_ID_LENGTH)
 
     void reset()
     {
@@ -341,11 +335,9 @@ struct CancelMsg
         msg_type = (exchange::ExchangeApiMsgType_t) ntohl((int32_t)msg_type);
         msg_size = ntohl(msg_size);
         seq_num = ntoh64(seq_num);
-        cl_ord_id = ntoh64(cl_ord_id);
         sending_time = ntoh64(sending_time);
         poss_resend = ntohl(poss_resend);
         order_id = ntoh64(order_id);
-        orig_cl_ord_id = ntoh64(orig_cl_ord_id);
     }
 
     void hton()
@@ -353,11 +345,9 @@ struct CancelMsg
         msg_type = (exchange::ExchangeApiMsgType_t) htonl((int32_t)msg_type);
         msg_size = htonl(msg_size);
         seq_num = hton64(seq_num);
-        cl_ord_id = hton64(cl_ord_id);
         sending_time = hton64(sending_time);
         poss_resend = htonl(poss_resend);
         order_id = hton64(order_id);
-        orig_cl_ord_id = hton64(orig_cl_ord_id);
     }
 
     friend std::ostream & operator<<(std::ostream & out, const CancelMsg& msg)
@@ -398,7 +388,7 @@ struct ExecReportMsg
     DECLARE_STRING_FIELD(party_id, PartyId, exchange::COMP_ID_LENGTH)
     DECLARE_STRING_FIELD(party_sub_id, PartySubId, exchange::COMP_ID_LENGTH)
     DECLARE_STRING_FIELD(account, Account, exchange::COMP_ID_LENGTH)
-    DECLARE_NUM_FIELD(cl_ord_id, ClOrdId, int64_t)
+    DECLARE_STRING_FIELD(cl_ord_id, ClOrdId, exchange::CLORD_ID_LENGTH)
     DECLARE_ENUM_FIELD(exec_inst, ExecInst, exchange::ExecInst_t)
     DECLARE_NUM_FIELD(order_qty, OrderQty, int64_t)
     DECLARE_ENUM_FIELD(ord_type, OrdType, exchange::OrdType_t)
@@ -423,7 +413,7 @@ struct ExecReportMsg
     DECLARE_PRICE_FIELD(last_px, LastPx, int64_t, exchange::PRICE_SCALE)
     DECLARE_NUM_FIELD(last_shares, LastShares, int64_t)
     DECLARE_NUM_FIELD(order_id, OrderId, int64_t)
-    DECLARE_NUM_FIELD(orig_cl_ord_id, OrigClOrdId, int64_t)
+    DECLARE_STRING_FIELD(orig_cl_ord_id, OrigClOrdId, exchange::CLORD_ID_LENGTH)
     DECLARE_NUM_FIELD(trade_id, TradeId, int64_t)
     DECLARE_ENUM_FIELD(ord_status, OrdStatus, exchange::OrdStatus_t)
     DECLARE_STRING_FIELD(security_id, SecurityId, exchange::SYMBOL_LENGTH)
@@ -444,7 +434,6 @@ struct ExecReportMsg
         msg_type = (exchange::ExchangeApiMsgType_t) ntohl((int32_t)msg_type);
         msg_size = ntohl(msg_size);
         seq_num = ntoh64(seq_num);
-        cl_ord_id = ntoh64(cl_ord_id);
         exec_inst = (exchange::ExecInst_t) ntohl((int32_t)exec_inst);
         order_qty = ntoh64(order_qty);
         ord_type = (exchange::OrdType_t) ntohl((int32_t)ord_type);
@@ -467,7 +456,6 @@ struct ExecReportMsg
         last_px = ntoh64(last_px);
         last_shares = ntoh64(last_shares);
         order_id = ntoh64(order_id);
-        orig_cl_ord_id = ntoh64(orig_cl_ord_id);
         trade_id = ntoh64(trade_id);
         ord_status = (exchange::OrdStatus_t) ntohl((int32_t)ord_status);
         transact_time = ntoh64(transact_time);
@@ -480,7 +468,6 @@ struct ExecReportMsg
         msg_type = (exchange::ExchangeApiMsgType_t) htonl((int32_t)msg_type);
         msg_size = htonl(msg_size);
         seq_num = hton64(seq_num);
-        cl_ord_id = hton64(cl_ord_id);
         exec_inst = (exchange::ExecInst_t) htonl((int32_t)exec_inst);
         order_qty = hton64(order_qty);
         ord_type = (exchange::OrdType_t) htonl((int32_t)ord_type);
@@ -503,7 +490,6 @@ struct ExecReportMsg
         last_px = hton64(last_px);
         last_shares = hton64(last_shares);
         order_id = hton64(order_id);
-        orig_cl_ord_id = hton64(orig_cl_ord_id);
         trade_id = hton64(trade_id);
         ord_status = (exchange::OrdStatus_t) htonl((int32_t)ord_status);
         transact_time = hton64(transact_time);
@@ -576,9 +562,9 @@ struct CancelRejectMsg
     DECLARE_STRING_FIELD(party_id, PartyId, exchange::COMP_ID_LENGTH)
     DECLARE_STRING_FIELD(party_sub_id, PartySubId, exchange::COMP_ID_LENGTH)
     DECLARE_STRING_FIELD(account, Account, exchange::COMP_ID_LENGTH)
-    DECLARE_NUM_FIELD(cl_ord_id, ClOrdId, int64_t)
+    DECLARE_STRING_FIELD(cl_ord_id, ClOrdId, exchange::CLORD_ID_LENGTH)
     DECLARE_ENUM_FIELD(ord_status, OrdStatus, exchange::OrdStatus_t)
-    DECLARE_NUM_FIELD(orig_cl_ord_id, OrigClOrdId, int64_t)
+    DECLARE_STRING_FIELD(orig_cl_ord_id, OrigClOrdId, exchange::CLORD_ID_LENGTH)
     DECLARE_STRING_FIELD(symbol, Symbol, exchange::SYMBOL_LENGTH)
     DECLARE_NUM_FIELD(order_id, OrderId, int64_t)
     DECLARE_STRING_FIELD(text, Text, exchange::TEXT_LENGTH)
@@ -597,9 +583,7 @@ struct CancelRejectMsg
         msg_type = (exchange::ExchangeApiMsgType_t) ntohl((int32_t)msg_type);
         msg_size = ntohl(msg_size);
         seq_num = ntoh64(seq_num);
-        cl_ord_id = ntoh64(cl_ord_id);
         ord_status = (exchange::OrdStatus_t) ntohl((int32_t)ord_status);
-        orig_cl_ord_id = ntoh64(orig_cl_ord_id);
         order_id = ntoh64(order_id);
         cxl_rej_reason = (exchange::CxlRejReason_t) ntohl((int32_t)cxl_rej_reason);
         cxl_rej_response_to = (exchange::CxlRejResponseTo_t) ntohl((int32_t)cxl_rej_response_to);
@@ -610,9 +594,7 @@ struct CancelRejectMsg
         msg_type = (exchange::ExchangeApiMsgType_t) htonl((int32_t)msg_type);
         msg_size = htonl(msg_size);
         seq_num = hton64(seq_num);
-        cl_ord_id = hton64(cl_ord_id);
         ord_status = (exchange::OrdStatus_t) htonl((int32_t)ord_status);
-        orig_cl_ord_id = hton64(orig_cl_ord_id);
         order_id = hton64(order_id);
         cxl_rej_reason = (exchange::CxlRejReason_t) htonl((int32_t)cxl_rej_reason);
         cxl_rej_response_to = (exchange::CxlRejResponseTo_t) htonl((int32_t)cxl_rej_response_to);
