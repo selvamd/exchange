@@ -322,7 +322,7 @@ class TimerEvent : public DomainObjectBase<TimerEvent>
         //Use DECLARE_INDEX if the data member is used to construct an index 
         DECLARE_INDEX(Timestamp, EventTime, 0)
         DECLARE_MEMBER(EnumData<TimerEventType_t>, EventType, 1)
-		DECLARE_MEMBER(int32_t, OrdIdx, 2)
+		DECLARE_MEMBER(int64_t, OrderID, 2)
 		DECLARE_MEMBER(int32_t, SubIDIdx, 3)
 		DECLARE_MEMBER(int32_t, PrfMpidIdx, 4)
 		DECLARE_MEMBER(int32_t, SymbolIdx, 5)

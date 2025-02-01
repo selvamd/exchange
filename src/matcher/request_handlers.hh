@@ -14,19 +14,48 @@ typedef void (*HandlerFunction)(context &ctx);
 
 HandlerFunction handler[15];
 
+bool dequeTimerMsg(context &ctx) {
+    Timestamp currts;
+    currts.set();
+    auto &db = ctx.imdb.getTable<TimerEvent>();    
+    DomainTable<TimerEvent>::IndexIterator itrS, itrE;
+    if (db.begin(itrS,"PrimaryKey") && db.end(itrE,"PrimaryKey")) {
+            if (itrS != itrE) {
+                auto evt = *(itrS);
+                if (currts.compareTo(evt->getEventTime()) < 0) 
+                    return false;
+                auto req = ctx.request();
+                req->timer_msg.reset();
+                req->timer_msg.setTimerEventType(evt->getEventType().toString());
+                req->timer_msg.setOrderId(evt->getOrderID());
+                req->timer_msg.setSymbolId(evt->getSymbolIdx());
+                req->timer_msg.setSubId(evt->getSubIDIdx());
+                req->timer_msg.setRiskProviderId(evt->getPrfMpidIdx());
+                req->timer_msg.setSide(evt->getSide().toString());
+                req->timer_msg.setInviteId(evt->getInviteID());
+                return true;
+            }
+    }
+    return false;
+}
+
 void sendResponses(context &ctx, ux_selector *server) 
 {
     //server->Writeint iClientID, char * Msg, int MsgLen);
     if (ctx.request()->api_msg_type == exchange::ExchangeApiMsgType_t::gen_msg || 
         ctx.request()->api_msg_type == exchange::ExchangeApiMsgType_t::config_msg)
         return;
-    auto &db = ctx.imdb.getTable<OrderEvent>();
+    auto &evtdb = ctx.imdb.getTable<OrderEvent>();
+    auto &orddb = ctx.imdb.getTable<OrderLookup>(); 
+    auto &firmdb = ctx.imdb.getTable<FirmLookup>(); 
     DomainTable<OrderEvent>::IndexIterator itrS, itrE;
-    if (db.begin(itrS,"PrimaryKey") && db.end(itrE,"PrimaryKey")) {
+    if (evtdb.begin(itrS,"PrimaryKey") && evtdb.end(itrE,"PrimaryKey")) {
             while (itrS != itrE) {
-                prepareExecReport(ctx, db.getObjectID(*(itrS)));
-                auto iClientID = 0; //m_response.exec_report_msg.getTargetCompId();
-                server->Write(iClientID, (char *)ctx.response(), sizeof(ctx.response()->exec_report_msg));
+                auto ordevt = *(itrS);
+                auto ord = orddb.getObject(ordevt->getOrdIdx());
+                auto firm = firmdb.getObject(ord->getSenderCompId());
+                prepareExecReport(ctx, evtdb.getObjectID(ordevt));
+                server->Write(firm->getClientID(), (char *)ctx.response(), sizeof(ctx.response()->exec_report_msg));
                 ++itrS;
             }
     }
@@ -62,7 +91,7 @@ void processConfigMsg(context &ctx) {
 
 void initHandler()
 {
-    //Various msg types: genmsg(login,heartbeat),config, fix, nbbo, timer  
+    //Various msg types: genmsg(login),config, fix, nbbo, timer  
     handler[(int)exchange::ExchangeApiMsgType_t::gen_msg]   = processGenMsg;
     handler[(int)exchange::ExchangeApiMsgType_t::new_order] = processNewOrder;
     handler[(int)exchange::ExchangeApiMsgType_t::timer_msg] = processTimerMsg;

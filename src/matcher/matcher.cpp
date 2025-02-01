@@ -7,7 +7,6 @@
 #include <stdio.h>
 #include <iomanip>
 #include <unistd.h>
-//#include "ServiceDBInit.hh"
 #include "context.hpp"
 #include "request_handlers.hh"
 #include "msg_generator.hh"
@@ -44,7 +43,15 @@ int processRequests(context& ctx)
     while (true)
     {
         memset((void *)inmsg, 0, sizeof(inmsg));
-        memset((void *)outmsg, 0, sizeof(exchange_api::ExchangeApiUnion));
+        memset((void *)outmsg, 0, sizeof(outmsg));
+        //process timer event if present
+        if (dequeTimerMsg(ctx)) {
+            auto evtreq = inmsg->api_msg_type;
+            handler[(int)evtreq](ctx);
+            sendResponses(ctx,server);
+            memset((void *)inmsg, 0, sizeof(inmsg));
+            memset((void *)outmsg, 0, sizeof(outmsg));
+        }
         iRC = server->Read(iClientID, (char *)inmsg);
         if ( iRC == ux_selector::SUCCESS )
         {
@@ -73,7 +80,6 @@ int main(int , char ** )
     initHandler();
     context ctx = context();
     ctx.initdb();
-    //initdb<Service_t::MATCHER>(ctx);
 
     server = new ux_selector(20);
     server->AddServer(65000);
@@ -85,5 +91,5 @@ int main(int , char ** )
     }
 
     ctx.closedb();
-    //closedb<Service_t::MATCHER>();
+    delete server;
 }
