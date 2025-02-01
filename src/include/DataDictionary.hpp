@@ -265,11 +265,62 @@ enum class TimeInForce_t
 
 enum class ClientType_t
 {
-    CUSTOMER,
-    FIRM,
-    BROKER,
-    DEALER
+    INVESTOR,
+    RISK_PROVIDER
 };
+
+enum class ConditionalEligible_t
+{
+    CO_ELIBIGLE_ON,
+    CO_ELIBIGLE_OFF
+};
+
+enum class OrderLife_t
+{
+    FIRST,
+    SECOND
+};
+
+enum class OrderUrgency_t 
+{
+    LOW,
+    MEDIUM,
+    HIGH
+};
+
+enum class ContraCategory_t
+{
+    PARITY,
+    PARITY_PLUS_ONE,
+    PARITY_PLUS_TWO
+};
+
+enum class RiskTier_t
+{
+    SILVER,
+    GOLD,
+    PLATINUM
+};
+
+enum class SelfTradeInst_t 
+{
+    ALLOW,
+    STOP_MPID_SUBID
+};
+
+enum class MinQtyInst_t 
+{
+    TRADE_RESIDUE,
+    CANCEL_RESIDUE
+};
+
+enum class OrdTypeExt_t
+{
+    NONE,
+    CONDITIONAL,
+    FIRMUP
+};
+
 
 enum class CxlRejReason_t
 {
@@ -378,7 +429,55 @@ static std::vector<std::string> & getEnumVector(ExchangeApiMsgType_t val)
 
 static std::vector<std::string> & getEnumVector(ClientType_t val)
 {
-    static std::vector<std::string> vec  {"0-CUSTOMER","1-FIRM","2-BROKER","3-DEALER"};
+    static std::vector<std::string> vec  {"1-INVESTOR","2-RISKPROVIDER"};
+    return vec;
+}
+
+static std::vector<std::string> & getEnumVector(ConditionalEligible_t val)
+{
+    static std::vector<std::string> vec  {"1-CO_ELIBIGLE_ON","2-CO_ELIBIGLE_OFF"};
+    return vec;
+}
+
+static std::vector<std::string> & getEnumVector(OrderLife_t val)
+{
+    static std::vector<std::string> vec  {"1-FIRST","2-SECOND"};
+    return vec;
+}
+
+static std::vector<std::string> & getEnumVector(OrderUrgency_t val)
+{
+    static std::vector<std::string> vec  {"L-LOW","M-MEDIUM","H-HIGH"};
+    return vec;
+}
+
+static std::vector<std::string> & getEnumVector(ContraCategory_t val)
+{
+    static std::vector<std::string> vec  {"A-PARITY","B-PARITY_PLUS_ONE","C-PARITY_PLUS_TWO"};
+    return vec;
+}
+
+static std::vector<std::string> & getEnumVector(RiskTier_t val)
+{
+    static std::vector<std::string> vec  {"1-SILVER","2-GOLD","3-PLATINUM"};
+    return vec;
+}
+
+static std::vector<std::string> & getEnumVector(SelfTradeInst_t val)
+{
+    static std::vector<std::string> vec  {"1-ALLOW","2-STOP_MPID_SUBID"};
+    return vec;
+}
+
+static std::vector<std::string> & getEnumVector(MinQtyInst_t val) 
+{
+    static std::vector<std::string> vec  {"1-TRADE_RESIDUE","2-CANCEL_RESIDUE"};
+    return vec;
+}
+
+static std::vector<std::string> & getEnumVector(OrdTypeExt_t val) 
+{
+    static std::vector<std::string> vec  {"N-NONE","C-CONDITIONAL","F-FIRMUP"};
     return vec;
 }
 

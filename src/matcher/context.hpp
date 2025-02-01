@@ -13,6 +13,11 @@ class context
 {
   public:
 
+    int64_t getNextFirmId() { return 0; }
+    int64_t getNextOrderId() { return 0; }
+    int64_t getNextExecId() { return 0; }
+    int64_t getInviteId() { return 0; }
+
     void printdb() 
     {
       std::cout << "Order count        : " << imdb.getRecordCount<OrderLookup>() << std::endl;

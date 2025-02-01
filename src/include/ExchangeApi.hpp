@@ -269,18 +269,28 @@ struct NewOrderMsg
     DECLARE_NUM_FIELD(order_qty, OrderQty, int64_t)
     DECLARE_ENUM_FIELD(ord_type, OrdType, exchange::OrdType_t)
     DECLARE_PRICE_FIELD(price, Price, int64_t, exchange::PRICE_SCALE)
-    DECLARE_TIME_FIELD(sending_time, SendingTime, int64_t)
     DECLARE_ENUM_FIELD(side, Side, exchange::Side_t)
     DECLARE_STRING_FIELD(symbol, Symbol, exchange::SYMBOL_LENGTH)
     DECLARE_ENUM_FIELD(time_in_force, TimeInForce, exchange::TimeInForce_t)
     DECLARE_NUM_FIELD(poss_resend, PossResend, int32_t)
     DECLARE_ENUM_FIELD(auto_cancel, AutoCancel, exchange::AutoCancel_t)
-    DECLARE_PRICE_FIELD(stop_px, StopPx, int64_t, exchange::PRICE_SCALE)
-    DECLARE_NUM_FIELD(max_floor, MaxFloor, int64_t)
-    DECLARE_TIME_FIELD(expire_time, ExpireTime, int64_t)
+    DECLARE_NUM_FIELD(invite_id, InviteId, int64_t)
+    DECLARE_NUM_FIELD(min_qty, MinQty, int32_t)
     DECLARE_ENUM_FIELD(client_type, ClientType, exchange::ClientType_t)
-    DECLARE_STRING_FIELD(trading_session_id, TradingSessionId, exchange::TRADE_SESSION_LENGTH)
-    DECLARE_NUM_FIELD(no_trading_sessions, NoTradingSessions, int32_t)
+    // DECLARE_TIME_FIELD(sending_time, SendingTime, int64_t)
+    // DECLARE_PRICE_FIELD(stop_px, StopPx, int64_t, exchange::PRICE_SCALE)
+    // DECLARE_STRING_FIELD(trading_session_id, TradingSessionId, exchange::TRADE_SESSION_LENGTH)
+    // DECLARE_NUM_FIELD(no_trading_sessions, NoTradingSessions, int32_t)
+
+    DECLARE_ENUM_FIELD(conditional_eligible, ConditionalEligible, exchange::ConditionalEligible_t)
+    DECLARE_ENUM_FIELD(order_life, OrderLife, exchange::OrderLife_t)
+    DECLARE_ENUM_FIELD(order_urgency, OrderUrgency, exchange::OrderUrgency_t)
+    DECLARE_ENUM_FIELD(contra_category, ContraCategory, exchange::ContraCategory_t)
+    DECLARE_ENUM_FIELD(risk_tier, RiskTier, exchange::RiskTier_t)
+    DECLARE_ENUM_FIELD(self_trade_inst, SelfTradeInst, exchange::SelfTradeInst_t)
+    DECLARE_ENUM_FIELD(min_qty_inst, MinQtyInst, exchange::MinQtyInst_t)
+    DECLARE_ENUM_FIELD(ord_type_ext, OrdTypeExt, exchange::OrdTypeExt_t)
+
 
     void reset()
     {
@@ -298,16 +308,21 @@ struct NewOrderMsg
         order_qty = ntoh64(order_qty);
         ord_type = (exchange::OrdType_t) ntohl((int32_t)ord_type);
         price = ntoh64(price);
-        sending_time = ntoh64(sending_time);
         side = (exchange::Side_t) ntohl((int32_t)side);
         time_in_force = (exchange::TimeInForce_t) ntohl((int32_t)time_in_force);
         poss_resend = ntohl(poss_resend);
         auto_cancel = (exchange::AutoCancel_t) ntohl((int32_t)auto_cancel);
-        stop_px = ntoh64(stop_px);
-        max_floor = ntoh64(max_floor);
-        expire_time = ntoh64(expire_time);
         client_type = (exchange::ClientType_t) ntohl((int32_t)client_type);
-        no_trading_sessions = ntohl(no_trading_sessions);
+        min_qty = ntohl(min_qty);
+        invite_id = ntoh64(invite_id);
+        conditional_eligible = (exchange::ConditionalEligible_t) ntohl((int32_t)conditional_eligible);
+        order_life = (exchange::OrderLife_t) ntohl((int32_t)order_life);
+        order_urgency = (exchange::OrderUrgency_t) ntohl((int32_t)order_urgency);
+        contra_category = (exchange::ContraCategory_t) ntohl((int32_t)contra_category);
+        risk_tier = (exchange::RiskTier_t) ntohl((int32_t)risk_tier);
+        self_trade_inst = (exchange::SelfTradeInst_t) ntohl((int32_t)self_trade_inst);
+        min_qty_inst = (exchange::MinQtyInst_t) ntohl((int32_t)min_qty_inst);
+        ord_type_ext = (exchange::OrdTypeExt_t) ntohl((int32_t)ord_type_ext);
     }
 
     void hton()
@@ -319,16 +334,21 @@ struct NewOrderMsg
         order_qty = hton64(order_qty);
         ord_type = (exchange::OrdType_t) htonl((int32_t)ord_type);
         price = hton64(price);
-        sending_time = hton64(sending_time);
         side = (exchange::Side_t) htonl((int32_t)side);
         time_in_force = (exchange::TimeInForce_t) htonl((int32_t)time_in_force);
         poss_resend = htonl(poss_resend);
         auto_cancel = (exchange::AutoCancel_t) htonl((int32_t)auto_cancel);
-        stop_px = hton64(stop_px);
-        max_floor = hton64(max_floor);
-        expire_time = hton64(expire_time);
         client_type = (exchange::ClientType_t) htonl((int32_t)client_type);
-        no_trading_sessions = htonl(no_trading_sessions);
+        min_qty = htonl(min_qty);
+        invite_id = hton64(invite_id);
+        conditional_eligible = (exchange::ConditionalEligible_t) htonl((int32_t)conditional_eligible);
+        order_life = (exchange::OrderLife_t) htonl((int32_t)order_life);
+        order_urgency = (exchange::OrderUrgency_t) htonl((int32_t)order_urgency);
+        contra_category = (exchange::ContraCategory_t) htonl((int32_t)contra_category);
+        risk_tier = (exchange::RiskTier_t) htonl((int32_t)risk_tier);
+        self_trade_inst = (exchange::SelfTradeInst_t) htonl((int32_t)self_trade_inst);
+        min_qty_inst = (exchange::MinQtyInst_t) htonl((int32_t)min_qty_inst);
+        ord_type_ext = (exchange::OrdTypeExt_t) htonl((int32_t)ord_type_ext);
     }
 
     friend std::ostream & operator<<(std::ostream & out, const NewOrderMsg& msg)
@@ -351,18 +371,22 @@ struct NewOrderMsg
         msg.printOrderQty(out);
         msg.printOrdType(out);
         msg.printPrice(out);
-        msg.printSendingTime(out);
         msg.printSide(out);
         msg.printSymbol(out);
         msg.printTimeInForce(out);
         msg.printPossResend(out);
         msg.printAutoCancel(out);
-        msg.printStopPx(out);
-        msg.printMaxFloor(out);
-        msg.printExpireTime(out);
         msg.printClientType(out);
-        msg.printTradingSessionId(out);
-        msg.printNoTradingSessions(out);
+        msg.printMinQty(out);
+        msg.printInviteId(out);
+        msg.printConditionalEligible(out);
+        msg.printOrderLife(out);
+        msg.printOrderUrgency(out);
+        msg.printContraCategory(out);
+        msg.printRiskTier(out);
+        msg.printSelfTradeInst(out);
+        msg.printMinQtyInst(out);
+        msg.printOrdTypeExt(out);
         return out;
     }
 };

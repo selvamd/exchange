@@ -44,21 +44,21 @@ class OrderLookup : public DomainObjectBase<OrderLookup>
 
 		DECLARE_MEMBER(int32_t, PartyId, 14) //MPID
 		DECLARE_MEMBER(int32_t, PartySubId, 15) //SUBID
-		DECLARE_MEMBER(int64_t, ExecId, 16)
-		DECLARE_MEMBER(int64_t, Price, 17)
-		DECLARE_MEMBER(int64_t, ArrivalTime, 18)
-		DECLARE_MEMBER(EnumData<TimeInForce_t>, TimeInForce, 19)
-		DECLARE_MEMBER(EnumData<OrdType_t>, OrdType, 20)
-		DECLARE_MEMBER(EnumData<OrdStatus_t>, OrdStatus, 21)
-		DECLARE_MEMBER(EnumData<OrderLife_t>, OrderLife, 22)
-		DECLARE_MEMBER(EnumData<MinQtyInst_t>, MinQtyInst, 23)
-		DECLARE_MEMBER(EnumData<ConditionalEligible_t>, ConditionalEligible, 24)
-		DECLARE_MEMBER(EnumData<SelfTradeInst_t>, SelfTradeInst, 25)
-		DECLARE_MEMBER(EnumData<AutoCancel_t>, AutoCancel, 26)
-		DECLARE_MEMBER(int32_t, CumQty, 27)
-		DECLARE_MEMBER(int32_t, AvgPx, 28)
-		DECLARE_MEMBER(int32_t, MinQty, 29)
-		DECLARE_MEMBER(int32_t, LeavesQty, 30)
+		DECLARE_MEMBER(int64_t, Price, 16)
+		DECLARE_MEMBER(int64_t, ArrivalTime, 17)
+		DECLARE_MEMBER(EnumData<TimeInForce_t>, TimeInForce, 18)
+		DECLARE_MEMBER(EnumData<OrdType_t>, OrdType, 19)
+		DECLARE_MEMBER(EnumData<OrdStatus_t>, OrdStatus, 20)
+		DECLARE_MEMBER(EnumData<OrderLife_t>, OrderLife, 21)
+		DECLARE_MEMBER(EnumData<MinQtyInst_t>, MinQtyInst, 22)
+		DECLARE_MEMBER(EnumData<ConditionalEligible_t>, ConditionalEligible, 23)
+		DECLARE_MEMBER(EnumData<SelfTradeInst_t>, SelfTradeInst, 24)
+		DECLARE_MEMBER(EnumData<AutoCancel_t>, AutoCancel, 25)
+		DECLARE_MEMBER(int32_t, CumQty, 26)
+		DECLARE_MEMBER(int32_t, AvgPx, 27)
+		DECLARE_MEMBER(int32_t, MinQty, 28)
+		DECLARE_MEMBER(int32_t, LeavesQty, 29)
+		DECLARE_MEMBER(EnumData<OrdTypeExt_t>, OrdTypeExt, 30)
 
 		//DECLARE_INDEX(FixedString<exchange::COMP_ID_LENGTH+1>, SenderCompIdStr, 1)
 		//DECLARE_MEMBER(EnumData<ExecInst_t>, ExecInst, 14)
@@ -282,11 +282,12 @@ class OrderEvent : public DomainObjectBase<OrderEvent>
 		DECLARE_MEMBER(int32_t, TradeQty, 4)
 		DECLARE_MEMBER(int32_t, PostFillCumQty, 5)
 		DECLARE_MEMBER(int32_t, PostFillLeavesQty, 6)
-		DECLARE_MEMBER(EnumData<OrdStatus_t>, OrdStatus, 7)
+		DECLARE_MEMBER(int64_t, AvgPrice, 7)
+		DECLARE_MEMBER(EnumData<OrdStatus_t>, OrdStatus, 8)
 
-        static int maxFields()    { return 8; }
+        static int maxFields()    { return 9; }
         #define SET(FieldIndex) DECLARE_END(FieldIndex)
-        SET8()
+        SET9()
         #undef SET
                     
         const int d_row;
