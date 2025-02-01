@@ -13,10 +13,31 @@ class context
 {
   public:
 
-    int64_t getNextFirmId() { return 0; }
-    int64_t getNextOrderId() { return 0; }
-    int64_t getNextExecId() { return 0; }
-    int64_t getInviteId() { return 0; }
+    int64_t getNextFirmId()  { return ++max_firm_id;   }
+    int64_t getNextOrderId() { return ++max_order_id;  }
+    int64_t getNextExecId()  { return ++max_exec_id;   }
+    int64_t getInviteId()    { return ++max_invite_id; }
+
+    /*
+    * Allows non-subid firms to be created thru SOD Files and API
+    * In either case, user is expected to assign/supply unique FirmIds
+    * For subid firms created intraday, unique firmid is assigned by the system
+    */
+    FirmLookup * createFirmIntraday(int64_t firmid = 0) {
+        auto &firmdb = imdb.getTable<FirmLookup>();
+        if (firmid == 0) firmid = getNextFirmId();
+        else if (firmid <= max_firm_id) {
+            FirmLookup key;
+            key.setFirmId(firmid);
+            auto obj = firmdb.findByPrimaryKey(&key);
+            if (obj != nullptr) return nullptr;
+        } 
+        else max_firm_id = firmid;
+        
+        auto res = firmdb.createObject();
+        res->setFirmId(firmid);
+        return res;
+    }
 
     void printdb() 
     {
@@ -31,7 +52,7 @@ class context
     void initdb() 
     {
       imdb.getTable<FirmLookup>(nullptr,1500*sizeof(FirmLookup));
-      imdb.getTable<SymbolLookup>(nullptr,10000*sizeof(SymbolLookup));
+      imdb.getTable<SymbolLookup>(nullptr,20000*sizeof(SymbolLookup));
       imdb.getTable<OrderLookup>(nullptr,1000000*sizeof(OrderLookup));
       imdb.getTable<ConfigLookup>(nullptr,100000*sizeof(ConfigLookup));
       imdb.getTable<OrderEvent>(nullptr,10000*sizeof(OrderEvent));
@@ -51,6 +72,26 @@ class context
           dbreader.setBuffer(bufSerializer,1500);
           dbreader.unpackLog(imdb);
       }
+
+      auto &firmdb = imdb.getTable<FirmLookup>();
+      for (int i = 0; i < firmdb.capacity(); i++) {
+        auto firm = firmdb.getObject(i);
+        if (firm == nullptr) continue;
+        if (firm->getFirmId() > max_firm_id) 
+          max_firm_id = firm->getFirmId();
+      }
+
+      auto &orddb = imdb.getTable<OrderLookup>();
+      for (int i = 0; i < orddb.capacity(); i++) 
+      {
+        auto ord = orddb.getObject(i);
+        if (ord == nullptr) continue;
+        if (ord->getOrderId() > max_order_id) 
+          max_order_id = ord->getOrderId();
+        if (ord->getInviteId() > max_invite_id)
+          max_invite_id = ord->getInviteId();
+      }
+
       imdb.getLogger(bufLogger,8192);
       dbwriter.setBuffer(bufSerializer,1500);
       imdb.addDBChangeListener(&dbwriter);
@@ -74,6 +115,12 @@ class context
     exchange_api::ExchangeApiUnion * response() { return &m_response; }
 
   private:
+
+    int64_t max_firm_id   = 1000000;
+    int64_t max_order_id  = 1000000;
+    int64_t max_exec_id   = 1000000;
+    int64_t max_invite_id = 1000000;
+
     exchange_api::ExchangeApiUnion m_request;
     exchange_api::ExchangeApiUnion m_response;
     const std::string dbfile = "../data/matcher.dat";

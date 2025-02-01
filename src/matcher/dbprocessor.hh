@@ -56,7 +56,8 @@ OrderLookup * findOrder(context &ctx, int64_t ordid, bool create = false)
     return obj;
 }
 
-OrderEvent * createOrderEvent(context &ctx, int32_t lord, OrderEventType_t evt) {
+OrderEvent * createOrderEvent(context &ctx, int32_t lord, OrderEventType_t evt) 
+{
     auto &db = ctx.imdb.getTable<OrderEvent>();
     auto ord = ctx.imdb.getTable<OrderLookup>().getObject(lord);
     auto evtobj = db.createObject();
@@ -72,7 +73,8 @@ OrderEvent * createOrderEvent(context &ctx, int32_t lord, OrderEventType_t evt) 
     return evtobj;
 }
 
-OrderEvent * createOrderFill(context &ctx, int32_t lord, int64_t price, int32_t qty) {
+OrderEvent * createOrderFill(context &ctx, int32_t lord, int64_t price, int32_t qty) 
+{
     auto ord = ctx.imdb.getTable<OrderLookup>().getObject(lord);
     int32_t cum = ord->getCumQty() + qty;
     int64_t avgpx = (ord->getCumQty() * ord->getAvgPx() + price * qty)/cum;
@@ -90,10 +92,10 @@ OrderEvent * createOrderFill(context &ctx, int32_t lord, int64_t price, int32_t 
     return evt;
 }
 
-FirmLookup * createSubID(context &ctx, const char * cname, int32_t mpid, int32_t firmid) {
+FirmLookup * createSubID(context &ctx, const char * cname, int32_t mpid, int32_t firmid) 
+{
     auto &db = ctx.imdb.getTable<FirmLookup>();
-    auto firm = db.createObject();
-    firm->setFirmId(ctx.getNextFirmId());
+    auto firm = ctx.createFirmIntraday();
     firm->setFirmRecordType(FirmRecordType_t::SUBID);
     firm->setName(cname);
     firm->setParentMPID(db.getObject(mpid)->getFirmId());

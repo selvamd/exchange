@@ -52,7 +52,7 @@ std::string validate_new_order(context &ctx, OrderLookup &ord) {
     ord.setSymbolIdx(sym->d_row);
 
     firm = findFirmByName(ctx, FirmRecordType_t::MPID, req.getPartyId());
-    if (firm == nullptr) return "Invalid partyid";
+    if (firm == nullptr) return "Invalid partyid/mpid";
     ord.setPartyId(firm->d_row);
 
     firm = findFirm(ctx, firm->getParentFirm());
