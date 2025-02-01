@@ -367,10 +367,11 @@ class FirmLookup : public DomainObjectBase<FirmLookup>
         DECLARE_INDEX(EnumData<FirmRecordType_t>, FirmRecordType, 2)
         DECLARE_INDEX(int64_t, ParentFirm, 3)
         DECLARE_MEMBER(int64_t, ParentMPID, 4)
+        DECLARE_MEMBER(int32_t, ClientID, 5)
 
-        static int maxFields()    { return 5; }
+        static int maxFields()    { return 6; }
         #define SET(FieldIndex) DECLARE_END(FieldIndex)
-        SET5()
+        SET6()
         #undef SET
                     
         const int d_row;

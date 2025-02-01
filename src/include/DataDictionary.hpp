@@ -22,6 +22,7 @@ static const int32_t COMP_ID_LENGTH                     = 10;
 static const int32_t CLORD_ID_LENGTH                    = 30;
 static const int32_t TRADE_ID_LENGTH                    = 20;
 static const int32_t SYMBOL_LENGTH                      = 40;
+static const int32_t CONFIG_LENGTH                      = 50;
 static const int32_t FIRM_LENGTH                        = 10;
 static const int32_t TEXT_LENGTH                        = 100;
 static const int32_t RATING_LENGTH                      = 10;
@@ -154,6 +155,7 @@ static const std::string EXPIRED_TRADE_STATUS_STRING  = "EXPIRED";
     gen_msg = 0,
     nbbo_msg,
     timer_msg,
+    config_msg,
     new_order,
     replace_order,
     cancel,
@@ -364,6 +366,7 @@ static std::vector<std::string> & getEnumVector(ExchangeApiMsgType_t val)
                            "x-genmsg",
                            "N-nbbo_msg",
                            "T-timer_msg",
+                           "C-config_msg",
                            "D-new_order",
                            "G-replace_order",
                            "F-cancel",

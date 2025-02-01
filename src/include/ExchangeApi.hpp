@@ -197,6 +197,59 @@ struct TimerMsg
     }
 };
 
+struct ConfigMsg
+{
+    DECLARE_ENUM_FIELD(msg_type, MsgType, exchange::ExchangeApiMsgType_t)
+    DECLARE_NUM_FIELD(msg_size, MsgSize, int32_t)
+    DECLARE_NUM_FIELD(seq_num, SeqNum, int64_t)
+    DECLARE_STRING_FIELD(sender_comp_id, SenderCompId, exchange::COMP_ID_LENGTH)
+    DECLARE_STRING_FIELD(target_comp_id, TargetCompId, exchange::COMP_ID_LENGTH)
+    DECLARE_STRING_FIELD(table_name, TableName, exchange::CONFIG_LENGTH)
+    DECLARE_STRING_FIELD(config_name, ConfigName, exchange::CONFIG_LENGTH)
+    DECLARE_STRING_FIELD(config_value, ConfigValue, exchange::CONFIG_LENGTH)
+    DECLARE_STRING_FIELD(symbol, Symbol, exchange::SYMBOL_LENGTH)
+    DECLARE_NUM_FIELD(firm_id, FirmId, int64_t)
+
+    void reset()
+    {
+        memset((void *)this, 0, sizeof(*this));
+        msg_type = exchange::ExchangeApiMsgType_t::config_msg;
+        msg_size = sizeof(*this);
+    }
+
+    void ntoh()
+    {
+        msg_type = (exchange::ExchangeApiMsgType_t) ntohl((int32_t)msg_type);
+        msg_size = ntohl(msg_size);
+        seq_num = ntoh64(seq_num);
+        firm_id = ntoh64(firm_id);
+    }
+
+    void hton()
+    {
+        msg_type = (exchange::ExchangeApiMsgType_t) htonl((int32_t)msg_type);
+        msg_size = htonl(msg_size);
+        seq_num = hton64(seq_num);
+        firm_id = hton64(firm_id);
+    }
+
+    friend std::ostream & operator<<(std::ostream & out, const ConfigMsg& msg)
+    {
+        out << "ConfigMsg";
+        msg.printMsgType(out);
+        msg.printMsgSize(out);
+        msg.printSeqNum(out);
+        msg.printSenderCompId(out);
+        msg.printTargetCompId(out);
+        msg.printTableName(out);
+        msg.printConfigName(out);
+        msg.printConfigValue(out);
+        msg.printSymbol(out);
+        msg.printFirmId(out);
+        return out;
+    }
+};
+
 struct NewOrderMsg
 {
     DECLARE_ENUM_FIELD(msg_type, MsgType, exchange::ExchangeApiMsgType_t)
@@ -771,6 +824,9 @@ union ExchangeApiUnion
     struct CancelMsg cancel_msg;
     struct ExecReportMsg exec_report_msg;
     struct CancelRejectMsg cancel_reject;
+    struct NBBOMsg nbbo_msg;
+    struct TimerMsg timer_msg;
+    struct ConfigMsg config_msg;
 
     int32_t hton()
     {
@@ -779,6 +835,15 @@ union ExchangeApiUnion
         {
             case exchange::ExchangeApiMsgType_t::gen_msg :
                 gen_msg.hton();
+                break;
+            case exchange::ExchangeApiMsgType_t::timer_msg :
+                timer_msg.hton();
+                break;
+            case exchange::ExchangeApiMsgType_t::config_msg :
+                config_msg.hton();
+                break;
+            case exchange::ExchangeApiMsgType_t::nbbo_msg :
+                nbbo_msg.hton();
                 break;
             case exchange::ExchangeApiMsgType_t::new_order :
                 new_order_msg.hton();
@@ -812,6 +877,15 @@ union ExchangeApiUnion
         {
             case exchange::ExchangeApiMsgType_t::gen_msg :
                 gen_msg.ntoh();
+                break;
+            case exchange::ExchangeApiMsgType_t::nbbo_msg :
+                nbbo_msg.ntoh();
+                break;
+            case exchange::ExchangeApiMsgType_t::config_msg :
+                config_msg.ntoh();
+                break;
+            case exchange::ExchangeApiMsgType_t::timer_msg :
+                timer_msg.ntoh();
                 break;
             case exchange::ExchangeApiMsgType_t::new_order :
                 new_order_msg.ntoh();

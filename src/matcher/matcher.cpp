@@ -10,7 +10,9 @@
 //#include "ServiceDBInit.hh"
 #include "context.hpp"
 #include "request_handlers.hh"
-
+#include "msg_generator.hh"
+#include "dbprocessor.hh"
+#include "validator.hh"
 #include "ux_selector.hh"
 #include "api_SocketStreamer.hh"
 #include <csignal>
@@ -49,7 +51,10 @@ int processRequests(context& ctx)
             inmsg->ntoh();
             //Read and process the msg
             auto evtreq = inmsg->api_msg_type;
+            if (evtreq == exchange::ExchangeApiMsgType_t::gen_msg)
+                inmsg->gen_msg.setClientId(iClientID);
             handler[(int)evtreq](ctx);
+            sendResponses(ctx,server);
         }
         else
         {
