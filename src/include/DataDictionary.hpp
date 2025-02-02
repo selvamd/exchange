@@ -125,15 +125,10 @@ static const int32_t NUMBER_OF_ACTIVE_MATURITY_DATES = 20;
 static const int32_t MAX_CONTRACT_QUANTITY_LIMIT = 9999;
 
 //Price settings
-static const int64_t PRICE_PRECISION = 3;
-static const int64_t RATE_PRECISION  = 3;
-static const int64_t SCORE_PRECISION = 1;
-
+static const int64_t MAX_PRICE = 999999990000;
+static const int64_t MIN_PRICE = 10000;
 static const int64_t PRICE_SCALE = 1000000;
-static const int64_t RATE_SCALE  = 1000000;
-static const int64_t SCORE_SCALE  = 1000000;
-
-static const int32_t MINIMUM_NUMBER_OF_CHALLENGE_QUESTIONS_TO_ANSWER = 3;
+static const int64_t PRICE_MPV = 10000;
 
 static const std::string BUY_SIDE_STRING  = "BUY";
 static const std::string SELL_SIDE_STRING = "SELL";
@@ -168,25 +163,6 @@ enum class ExchangeApiMsgSubType_t
     CREATE,
     MODIFY,
     DELETE
-};
-
-enum class FirmType_t
-{
-    CLEARING_FIRM,
-    TRADING_FIRM,
-    TRADING_USER,
-    TRADING_ACCOUNT,
-    GATEWAY_CLIENT,
-    GATEWAY,
-    TRADING_PERMIT,
-    MATCHER
-};
-
-enum class FirmTradingStatus_t
-{
-    ACTIVE,
-    DISABLE,
-    BLOCK
 };
 
 enum class CancelType_t

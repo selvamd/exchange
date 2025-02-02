@@ -59,11 +59,11 @@ class OrderLookup : public DomainObjectBase<OrderLookup>
 		DECLARE_MEMBER(int32_t, MinQty, 28)
 		DECLARE_MEMBER(int32_t, LeavesQty, 29)
 		DECLARE_MEMBER(EnumData<OrdTypeExt_t>, OrdTypeExt, 30)
+		DECLARE_MEMBER(EnumData<OrderState_t>, OrderState, 31)
 
-		//DECLARE_INDEX(FixedString<exchange::COMP_ID_LENGTH+1>, SenderCompIdStr, 1)
-		//DECLARE_MEMBER(EnumData<ExecInst_t>, ExecInst, 14)
-		//DECLARE_MEMBER(EnumData<OpenClose_t>, OpenClose, 16)
-		//DECLARE_MEMBER(EnumData<ClientType_t>, ClientType, 18)
+		// DECLARE_INDEX(FixedString<exchange::COMP_ID_LENGTH+1>, SenderCompIdStr, 1)
+		// DECLARE_MEMBER(EnumData<ExecInst_t>, ExecInst, 14)
+		// DECLARE_MEMBER(EnumData<OpenClose_t>, OpenClose, 16)
 		// DECLARE_MEMBER(int64_t, SendingTime, 28)
 		// DECLARE_MEMBER(int64_t, ExpireTime, 29)
 		// DECLARE_MEMBER(int32_t, NoTradingSessions, 30)
@@ -71,9 +71,9 @@ class OrderLookup : public DomainObjectBase<OrderLookup>
 		// DECLARE_MEMBER(FixedString<exchange::TRADE_SESSION_LENGTH+1>, TradingSessionId, 32)
 		// DECLARE_MEMBER(int64_t, InsertionTimestamp, 33)
 
-        static int maxFields()    { return 31; }
+        static int maxFields()    { return 32; }
         #define SET(FieldIndex) DECLARE_END(FieldIndex)
-        SET31()
+        SET32()
         #undef SET
                     
         const int d_row;
@@ -210,10 +210,6 @@ class OrderLookup : public DomainObjectBase<OrderLookup>
 
 		static bool conditionalIndex(const OrderLookup* a,  const OrderLookup* b)
 		{
-			if (a->getSymbolIdx() != b->getSymbolIdx())
-                if (min(a->getSymbolIdx(),b->getSymbolIdx()) >= 0)
-    				return a->getSymbolIdx() < b->getSymbolIdx();
-
 			if (a->getInviteId() != b->getInviteId())
                 if (min(a->getInviteId(),b->getInviteId()) >= 0)
 				    return a->getInviteId() < b->getInviteId();
@@ -238,12 +234,16 @@ class SymbolLookup : public DomainObjectBase<SymbolLookup>
         DECLARE_INDEX(FixedString<20>, Name, 0)
         DECLARE_MEMBER(EnumData<SymbolStatus_t>, SymbolStatus, 1)
         DECLARE_MEMBER(int64_t, TransactionNumber, 2)
-        DECLARE_MEMBER(int32_t, NBBOBidPx, 3)
-        DECLARE_MEMBER(int32_t, NBBOAskPx, 4)
+        DECLARE_MEMBER(int64_t, NBBOBidPx, 3)
+        DECLARE_MEMBER(int64_t, NBBOAskPx, 4)
+        DECLARE_MEMBER(int64_t, INBidPx, 5)
+        DECLARE_MEMBER(int64_t, INAskPx, 6)
+        DECLARE_MEMBER(int64_t, RPBidPx, 7)
+        DECLARE_MEMBER(int64_t, RPAskPx, 8)
 
-        static int maxFields()    { return 5; }
+        static int maxFields()    { return 9; }
         #define SET(FieldIndex) DECLARE_END(FieldIndex)
-        SET5()
+        SET9()
         #undef SET
                     
         const int d_row;
@@ -425,14 +425,16 @@ class ConfigLookup : public DomainObjectBase<ConfigLookup>
     
         //Use DECLARE_INDEX if the data member is used to construct an index 
         DECLARE_INDEX(EnumData<ConfigName_t>, ConfigName, 0)
-        DECLARE_INDEX(int64_t, SymbolId,      1)
-        DECLARE_INDEX(int64_t, FirmId,        2)
-        DECLARE_MEMBER(int64_t, ConfigValue,  3)
-        DECLARE_MEMBER(int32_t, ConfigScale,  4)
+        DECLARE_INDEX(int32_t, SymIdx,          1)
+        DECLARE_INDEX(int32_t, FirmIdx,         2)
+        DECLARE_MEMBER(FixedString<20>, Symbol, 3)
+        DECLARE_MEMBER(int64_t, FirmId,         4)
+        DECLARE_MEMBER(int64_t, ConfigValue,    5)
+        DECLARE_MEMBER(int32_t, ConfigScale,    6)
 
-        static int maxFields()    { return 5; }
+        static int maxFields()    { return 7; }
         #define SET(FieldIndex) DECLARE_END(FieldIndex)
-        SET5()
+        SET7()
         #undef SET
                     
         const int d_row;
@@ -444,7 +446,6 @@ class ConfigLookup : public DomainObjectBase<ConfigLookup>
         static void createIndices(DomainTable<ConfigLookup> &table)
         {
             table.addIndex("PrimaryKey", primarykey);
-            table.addIndex("FirmConfigKey", firmkey);
         };
 
         static bool primarykey(const ConfigLookup * a,  const ConfigLookup * b)
@@ -452,29 +453,13 @@ class ConfigLookup : public DomainObjectBase<ConfigLookup>
             int i = a->getConfigName().compareForIndex(b->getConfigName());
             if (i != 0) return i < 0;
 
-            if ( a->getSymbolId() != b->getSymbolId() )
-                if (min(a->getSymbolId(),b->getSymbolId()) >= 0)
-                    return ( a->getSymbolId() < b->getSymbolId() );
+            if ( a->getFirmIdx() != b->getFirmIdx() )
+                if (min(a->getFirmIdx(),b->getFirmIdx()) >= 0)
+                    return ( a->getFirmIdx() < b->getFirmIdx() );
 
-            if ( a->getFirmId() != b->getFirmId() )
-                if (min(a->getFirmId(),b->getFirmId()) >= 0)
-                    return ( a->getFirmId() < b->getFirmId() );
-
-            return a->d_row < b->d_row;
-        };
-
-        static bool firmkey(const ConfigLookup * a,  const ConfigLookup * b)
-        {
-            int i = a->getConfigName().compareForIndex(b->getConfigName());
-            if (i != 0) return i < 0;
-
-            if ( a->getFirmId() != b->getFirmId() )
-                if (min(a->getFirmId(),b->getFirmId()) >= 0)
-                    return ( a->getFirmId() < b->getFirmId() );
-
-            if ( a->getSymbolId() != b->getSymbolId() )
-                if (min(a->getSymbolId(),b->getSymbolId()) >= 0)
-                    return ( a->getSymbolId() < b->getSymbolId() );
+            if ( a->getSymIdx() != b->getSymIdx() )
+                if (min(a->getSymIdx(),b->getSymIdx()) >= 0)
+                    return ( a->getSymIdx() < b->getSymIdx() );
 
             return a->d_row < b->d_row;
         };

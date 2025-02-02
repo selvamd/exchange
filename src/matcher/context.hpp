@@ -23,7 +23,8 @@ class context
     * In either case, user is expected to assign/supply unique FirmIds
     * For subid firms created intraday, unique firmid is assigned by the system
     */
-    FirmLookup * createFirmIntraday(int64_t firmid = 0) {
+    FirmLookup * createFirmIntraday(int64_t firmid = 0) 
+    {
         auto &firmdb = imdb.getTable<FirmLookup>();
         if (firmid == 0) firmid = getNextFirmId();
         else if (firmid <= max_firm_id) {

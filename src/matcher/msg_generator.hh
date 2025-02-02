@@ -9,6 +9,10 @@
 #include "context.hpp"
 #include <cstring> 
 
+void createOrderReject(context &ctx, OrderLookup &ord, std::string reason) 
+{
+}
+
 void prepareExecReport(context &ctx, int32_t levt) 
 {
     auto evt = ctx.imdb.getTable<OrderEvent>().getObject(levt);

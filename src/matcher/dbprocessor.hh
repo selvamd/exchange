@@ -8,6 +8,9 @@
 #include "ExchangeApi.hpp"
 #include <cstring> 
 #include "context.hpp"
+#include <math.h>
+#include <stdlib.h>
+using namespace std;
 
 SymbolLookup * findSymbol(context &ctx, const char * csym, bool create = false) 
 {
@@ -56,6 +59,34 @@ OrderLookup * findOrder(context &ctx, int64_t ordid, bool create = false)
     return obj;
 }
 
+OrderLookup * findConditionalOrder(context &ctx, int64_t invite, Side_t side) 
+{
+    auto &db = ctx.imdb.getTable<OrderLookup>();    
+    OrderLookup key;
+    key.setInviteId(invite);
+    key.setSide(side);
+    return db.findByUniqueKey("ConditionalIndex", &key);
+}
+
+
+void updatebbo(context &ctx, int32_t symbol, int32_t lord) {
+    auto sym = ctx.imdb.getTable<SymbolLookup>().getObject(symbol);
+    auto ord = ctx.imdb.getTable<OrderLookup>().getObject(lord);
+    if (sym != nullptr && ord != nullptr) {
+        if (ord->getSide()() == Side_t::BUY) {
+            if (ord->getClientType()() == ClientType_t::INVESTOR) 
+                sym->setINBidPx(max(sym->getINBidPx(), ord->getPrice()));
+            else
+                sym->setRPBidPx(max(sym->getRPBidPx(), ord->getPrice()));
+        } else {
+            if (ord->getClientType()() == ClientType_t::INVESTOR) 
+                sym->setINAskPx(min(sym->getINAskPx(), ord->getPrice()));
+            else
+                sym->setRPAskPx(min(sym->getRPAskPx(), ord->getPrice()));
+        }
+    }
+}
+
 OrderEvent * createOrderEvent(context &ctx, int32_t lord, OrderEventType_t evt) 
 {
     auto &db = ctx.imdb.getTable<OrderEvent>();
@@ -101,6 +132,79 @@ FirmLookup * createSubID(context &ctx, const char * cname, int32_t mpid, int32_t
     firm->setParentMPID(db.getObject(mpid)->getFirmId());
     firm->setParentFirm(db.getObject(firmid)->getFirmId());
     return firm;
+}
+
+void writeConfigRec(context &ctx, ConfigName_t config, int64_t value, int32_t firm, int32_t symbol) 
+{
+    auto &db = ctx.imdb.getTable<ConfigLookup>();
+    ConfigLookup key;
+    key.setConfigName(config);
+    key.setSymIdx(symbol);
+    key.setFirmIdx(firm);
+    key.setFirmId(0);
+    key.setSymbol("");
+    auto obj = db.findByPrimaryKey(&key);
+    if (obj == nullptr) 
+    {
+        obj = db.copyObject(&key);
+        if (firm > 0) 
+            obj->setFirmId(ctx.imdb.getTable<FirmLookup>().getObject(firm)->getFirmId());
+        if (symbol > 0)
+            obj->setSymbol(ctx.imdb.getTable<SymbolLookup>().getObject(firm)->getName());
+    }
+    obj->setConfigValue(value);
+}
+
+void saveUserConfig(context &ctx, ConfigName_t config, int32_t firm, int32_t symbol, int64_t value) 
+{
+    writeConfigRec(ctx, config, value, firm, symbol);
+}
+
+void saveSymbolConfig(context &ctx, int32_t symbol, ConfigName_t config, int64_t value)
+{
+    writeConfigRec(ctx, config, value, 0, symbol);
+}
+
+void saveGblConfig(context &ctx, ConfigName_t config, int64_t value) 
+{
+    writeConfigRec(ctx, config, value, 0, 0);
+}
+
+int64_t readUserConfig(context &ctx, ConfigName_t config, int32_t firm, int32_t symbol = 0) 
+{
+    auto &db = ctx.imdb.getTable<ConfigLookup>();
+    ConfigLookup key;
+    key.setConfigName(config);
+    key.setFirmIdx(firm);
+    key.setSymIdx(symbol);
+    auto obj = db.findByPrimaryKey(&key);
+    if (obj != nullptr) return obj->getConfigValue();
+    if (symbol > 0) {
+        key.setSymIdx(0);
+        obj = db.findByPrimaryKey(&key);
+        if (obj != nullptr) 
+            return obj->getConfigValue();
+    }
+    key.setFirmIdx(0);
+    obj = db.findByPrimaryKey(&key);
+    if (obj != nullptr) 
+        return obj->getConfigValue();
+    return 0;
+}
+
+int64_t readSystemConfig(context &ctx, ConfigName_t config, int32_t symbol = 0) 
+{
+    auto &db = ctx.imdb.getTable<ConfigLookup>();
+    ConfigLookup key;
+    key.setConfigName(config);
+    key.setFirmIdx(0);
+    key.setSymIdx(symbol);
+    auto obj = db.findByPrimaryKey(&key);
+    if (obj != nullptr) return obj->getConfigValue(); 
+    key.setSymIdx(0);
+    obj = db.findByPrimaryKey(&key);
+    if (obj != nullptr) return obj->getConfigValue();
+    return 0;
 }
 
 #endif

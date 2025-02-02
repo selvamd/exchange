@@ -8,7 +8,11 @@
 #include "ExchangeApi.hpp"
 #include "context.hpp"
 #include "msg_generator.hh"
+#include "validator.hh"
 #include <cstring> 
+
+void workOrder(context &ctx, int32_t lord);
+void workl1cross(context &ctx);
 
 typedef void (*HandlerFunction)(context &ctx);
 
@@ -62,11 +66,22 @@ void sendResponses(context &ctx, ux_selector *server)
 }
 
 void processNewOrder(context &ctx) {
+    OrderLookup ord;
+    auto res = validate_new_order(ctx, ord);
+    if (res != "") {
+        createOrderReject(ctx, ord, res);
+    }
+    auto rec = ctx.imdb.getTable<OrderLookup>().copyObject(&ord);
+    createOrderEvent(ctx, rec->d_row, OrderEventType_t::ACK);
+    updatebbo(ctx, ord.getSymbolIdx(), rec->d_row);
+    workOrder(ctx, rec->d_row);
     //std::cout << ClientId << "," << "processNewOrder" << std::endl;
 }
 
 void processGenMsg(context &ctx) {
-    //std::cout << ClientId << "," << "genmsg" << std::endl;
+    auto req = ctx.request()->gen_msg;
+    auto firm = findFirmByName(ctx, FirmRecordType_t::GATEWAY, req.getSenderCompId());
+    if (firm != nullptr) firm->setClientID(req.getClientId());
 }
 
 void processTimerMsg(context &ctx) {
@@ -102,4 +117,10 @@ void initHandler()
 }
 
 
+void workOrder(context &ctx, int32_t lord) {
+}
+
+void workl1cross(context &ctx) {
+    
+}
 #endif
