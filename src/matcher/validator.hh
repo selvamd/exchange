@@ -52,10 +52,12 @@ bool check_risk_offsef(context &ctx, int32_t rpid, int32_t symbol,
         int64_t minratio, int64_t maxratio)
 {
     auto val = readUserConfig(ctx, ConfigName_t::RP_RO_ELIGIBLE, rpid);
-    if (val == 0) return false;
+    if (val == 0) return false; // Eligible by default (-1) or when set to 1
     auto rtval = readUserConfig(ctx, ConfigName_t::RP_RT_NOTIONAL, rpid, symbol);
     auto roval = readUserConfig(ctx, ConfigName_t::RP_RO_NOTIONAL, rpid, symbol);
     auto pause = readUserConfig(ctx, ConfigName_t::RP_RO_PAUSED, rpid, symbol);
+    // upstream error becos when first rp order is received, it needs to be populated
+    if (pause == -1 || rtval == -1 || roval == -1) return false;  
     if (pause == 1 && (100 * roval)/rtval < minratio) pause = 0;
     if (pause == 0 && (100 * roval)/rtval > maxratio) pause = 1;
     saveUserConfig(ctx, ConfigName_t::RP_RO_PAUSED, rpid, symbol, pause);
@@ -127,8 +129,10 @@ bool check_conditional_match(context &ctx, OrderLookup *ordin, OrderLookup *ordb
         auto ordc = findConditionalOrder(ctx, ordin->getInviteId(), ordbk->getSide()());
         if (ordc == nullptr) 
             return true;
+        // CO vs CO, where firmup has not happened on both sides. Just wait
         if (ordc->getOrdTypeExt()() == OrdTypeExt_t::CONDITIONAL) 
             return false;
+        // Firmup vs firmup, do not match if they are no part of same CO
         if (ordc->getOrdTypeExt()() == OrdTypeExt_t::FIRMUP) 
             return ordbk->d_row == ordc->d_row;
         // return false if ordbk has lower priority than my cowaiting co
@@ -181,8 +185,9 @@ bool is_match_eligible(context &ctx, int32_t lordb, int32_t lords)
         auto val = (ordb->getClientType()() == ClientType_t::INVESTOR)?
             readUserConfig(ctx, ConfigName_t::SID_RT_ELIGIBLE, ordb->getPartySubId()):
             readUserConfig(ctx, ConfigName_t::SID_RT_ELIGIBLE, ords->getPartySubId());
-        if (val == 0 && ordb->getOrderLife()() == OrderLife_t::FIRST) return false;
-        if (val == -1) return false; // not eligible
+        if (val == 0) return false; // low not eligible regardless of orderlife
+        if (val < 2 && ordb->getOrderLife()() == OrderLife_t::FIRST) 
+            return false; //includes med and n/a
     } else if (ordb->getClientType()() == ClientType_t::INVESTOR) {
         //self trade check
         if (ordb->getPartySubId() == ords->getPartySubId())
@@ -194,8 +199,8 @@ bool is_match_eligible(context &ctx, int32_t lordb, int32_t lords)
             return false;
     } else {
         //read min/max ratio
-        auto ro2rtmin = readUserConfig(ctx, ConfigName_t::SYM_RO2RT_MIN, ordb->getSymbolIdx());
-        auto ro2rtmax = readUserConfig(ctx, ConfigName_t::SYM_RO2RT_MAX, ordb->getSymbolIdx());
+        auto ro2rtmin = readSystemConfig(ctx, ConfigName_t::SYM_RO2RT_MIN, ordb->getSymbolIdx());
+        auto ro2rtmax = readSystemConfig(ctx, ConfigName_t::SYM_RO2RT_MAX, ordb->getSymbolIdx());
         //check risk offset eligibility
         if (!check_risk_offsef(ctx, ordb->getPartyId(), sym->d_row, ro2rtmin, ro2rtmax)) 
             return false;
@@ -237,12 +242,13 @@ std::string validate_new_order(context &ctx, OrderLookup &ord) {
     ord.setSelfTradeInst(EnumData<SelfTradeInst_t>(req.toStringSelfTradeInst()));
     ord.setOrderUrgency(EnumData<OrderUrgency_t>(req.toStringOrderUrgency()));
     ord.setContraCategory(EnumData<ContraCategory_t>(req.toStringContraCategory()));
-    //TODO: Adjust the urgency and contra category here based on urgency level
-    //TODO: only tif=day for conditional orders
     ord.setRiskTier(EnumData<RiskTier_t>(req.toStringRiskTier()));
     ord.setOrdTypeExt(EnumData<OrdTypeExt_t>(req.toStringOrdTypeExt()));
     ord.setInviteId(req.getInviteId());
     ord.setMinQty(req.getMinQty());
+    if (ord.getOrdTypeExt()() == OrdTypeExt_t::CONDITIONAL && 
+        ord.getTimeInForce()() != TimeInForce_t::DAY)
+            return "CO must have tif=day";
 
     auto firm = findFirmByName(ctx, FirmRecordType_t::GATEWAY, req.getSenderCompId());
     if (firm == nullptr) return "Invalid sendercomp";
@@ -269,7 +275,37 @@ std::string validate_new_order(context &ctx, OrderLookup &ord) {
         firm = createSubID(ctx, req.getPartySubId(), ord.getPartyId(), ord.getFirmId());
     ord.setPartySubId(firm->d_row);
 
+    //Adjust the urgency and contra category here based on urgency-level
+    auto urglvl = readUserConfig(ctx, ConfigName_t::SID_URGENCY_LEVEL, ord.getPartySubId(), ord.getSymbolIdx());
+    if (ord.getOrderUrgency()() == OrderUrgency_t::HIGH)
+        ord.setContraCategory(ContraCategory_t::PARITY_PLUS_TWO);
+    if (ord.getOrderUrgency()() == OrderUrgency_t::MEDIUM)
+        if (ord.getContraCategory()() != ContraCategory_t::PARITY)
+            ord.setContraCategory(ContraCategory_t::PARITY_PLUS_TWO);
+    OrderUrgency_t urg = OrderUrgency_t::LOW;
+    if (urglvl == 1) urg = OrderUrgency_t::MEDIUM;
+    if (urglvl == 2) urg = OrderUrgency_t::HIGH;
+    if (urglvl >= 0 && urg != ord.getOrderUrgency()()) 
+    {
+        if (urg == OrderUrgency_t::HIGH) 
+            ord.setContraCategory(ContraCategory_t::PARITY_PLUS_TWO);
+        if (urg == OrderUrgency_t::MEDIUM)
+            if (ord.getContraCategory()() != ContraCategory_t::PARITY)
+                ord.setContraCategory(ContraCategory_t::PARITY_PLUS_TWO);
+        if (urg == OrderUrgency_t::LOW) 
+            if (ord.getContraCategory()() != ContraCategory_t::PARITY || 
+                ord.getOrderUrgency()() != OrderUrgency_t::MEDIUM)
+                    ord.setContraCategory(ContraCategory_t::PARITY_PLUS_TWO);
+        ord.setOrderUrgency(urg);
+    } 
+
     ord.setOrderId(ctx.getNextOrderId());
+    if (ord.getClientType()() == ClientType_t::RISK_PROVIDER) 
+    {
+        saveNewUserConfig(ctx, ConfigName_t::RP_RO_NOTIONAL, ord.getPartyId(), ord.getSymbolIdx(), 0);
+        saveNewUserConfig(ctx, ConfigName_t::RP_RT_NOTIONAL, ord.getPartyId(), ord.getSymbolIdx(), 1);
+        saveNewUserConfig(ctx, ConfigName_t::RP_RO_PAUSED, ord.getPartyId(), ord.getSymbolIdx(), 1);
+    }
 
     return "";
 }

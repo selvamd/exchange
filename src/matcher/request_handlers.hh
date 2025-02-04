@@ -15,7 +15,6 @@ void workOrder(context &ctx, int32_t lord);
 void workl1cross(context &ctx);
 
 typedef void (*HandlerFunction)(context &ctx);
-
 HandlerFunction handler[15];
 
 bool dequeTimerMsg(context &ctx) {
@@ -118,6 +117,13 @@ void initHandler()
 
 
 void workOrder(context &ctx, int32_t lord) {
+    auto ord = ctx.imdb.getTable<OrderLookup>().getObject(lord);
+    auto sym = ctx.imdb.getTable<SymbolLookup>().getObject(ord->getSymbolIdx());
+    int64_t midpx = (sym->getNBBOBidPx() + sym->getNBBOAskPx()) / 2;
+    if (ord->getSide()() == Side_t::BUY && ord->getPrice() < midpx) 
+        return;
+    if (ord->getSide()() == Side_t::SELL && ord->getPrice() > midpx) 
+        return;
 }
 
 void workl1cross(context &ctx) {

@@ -134,7 +134,8 @@ FirmLookup * createSubID(context &ctx, const char * cname, int32_t mpid, int32_t
     return firm;
 }
 
-void writeConfigRec(context &ctx, ConfigName_t config, int64_t value, int32_t firm, int32_t symbol) 
+//if replace = false, will only create if not present
+void writeConfigRec(context &ctx, ConfigName_t config, int64_t value, int32_t firm, int32_t symbol, bool replace = true) 
 {
     auto &db = ctx.imdb.getTable<ConfigLookup>();
     ConfigLookup key;
@@ -151,10 +152,15 @@ void writeConfigRec(context &ctx, ConfigName_t config, int64_t value, int32_t fi
             obj->setFirmId(ctx.imdb.getTable<FirmLookup>().getObject(firm)->getFirmId());
         if (symbol > 0)
             obj->setSymbol(ctx.imdb.getTable<SymbolLookup>().getObject(firm)->getName());
+        obj->setConfigValue(value);
     }
-    obj->setConfigValue(value);
+    if (replace) obj->setConfigValue(value);
 }
 
+void saveNewUserConfig(context &ctx, ConfigName_t config, int32_t firm, int32_t symbol, int64_t value) 
+{
+    writeConfigRec(ctx, config, value, firm, symbol, false);
+}
 void saveUserConfig(context &ctx, ConfigName_t config, int32_t firm, int32_t symbol, int64_t value) 
 {
     writeConfigRec(ctx, config, value, firm, symbol);
@@ -169,6 +175,7 @@ void saveGblConfig(context &ctx, ConfigName_t config, int64_t value)
 {
     writeConfigRec(ctx, config, value, 0, 0);
 }
+
 
 int64_t readUserConfig(context &ctx, ConfigName_t config, int32_t firm, int32_t symbol = 0) 
 {
@@ -189,7 +196,7 @@ int64_t readUserConfig(context &ctx, ConfigName_t config, int32_t firm, int32_t 
     obj = db.findByPrimaryKey(&key);
     if (obj != nullptr) 
         return obj->getConfigValue();
-    return 0;
+    return -1; // user configs can be missing and indicated by -1
 }
 
 int64_t readSystemConfig(context &ctx, ConfigName_t config, int32_t symbol = 0) 
@@ -204,7 +211,7 @@ int64_t readSystemConfig(context &ctx, ConfigName_t config, int32_t symbol = 0)
     key.setSymIdx(0);
     obj = db.findByPrimaryKey(&key);
     if (obj != nullptr) return obj->getConfigValue();
-    return 0;
+    return 0; // System configs unlike user configs are not expected to be missing
 }
 
 #endif
