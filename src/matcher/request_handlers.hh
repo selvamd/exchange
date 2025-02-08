@@ -12,7 +12,6 @@
 #include <cstring> 
 
 void workOrder(context &ctx, int32_t lord);
-void workl1cross(context &ctx);
 
 typedef void (*HandlerFunction)(context &ctx);
 HandlerFunction handler[15];
@@ -48,9 +47,16 @@ void sendResponses(context &ctx, ux_selector *server)
     if (ctx.request()->api_msg_type == exchange::ExchangeApiMsgType_t::gen_msg || 
         ctx.request()->api_msg_type == exchange::ExchangeApiMsgType_t::config_msg)
         return;
+
+    auto &firmdb = ctx.imdb.getTable<FirmLookup>(); 
+    if (ctx.response()->api_msg_type != exchange::ExchangeApiMsgType_t::gen_msg) {
+        // generate response
+        //auto firm = firmdb.getObject(ctx.request()->new_order_msg.getSenderCompId());
+        return;
+    }
+
     auto &evtdb = ctx.imdb.getTable<OrderEvent>();
     auto &orddb = ctx.imdb.getTable<OrderLookup>(); 
-    auto &firmdb = ctx.imdb.getTable<FirmLookup>(); 
     DomainTable<OrderEvent>::IndexIterator itrS, itrE;
     if (evtdb.begin(itrS,"PrimaryKey") && evtdb.end(itrE,"PrimaryKey")) {
             while (itrS != itrE) {
@@ -115,18 +121,48 @@ void initHandler()
     handler[(int)exchange::ExchangeApiMsgType_t::cancel] = processCancelOrder;
 }
 
+void tradeInvestor(context &ctx, OrderLookup &ord, SymbolLookup &sym) 
+{
+    if (ord.getClientType()() == ClientType_t::INVESTOR) {
+        // Do natural cross
 
-void workOrder(context &ctx, int32_t lord) {
+    } else {
+        // Do risk transfer
+    }
+}
+
+void tradeRiskProvider(context &ctx, OrderLookup &ord, SymbolLookup &sym) 
+{
+    if (ord.getClientType()() == ClientType_t::INVESTOR) {
+        // Do risk transfer
+    } else {
+        // Do risk offset
+    }
+}
+
+void workOrder(context &ctx, int32_t lord) 
+{
     auto ord = ctx.imdb.getTable<OrderLookup>().getObject(lord);
     auto sym = ctx.imdb.getTable<SymbolLookup>().getObject(ord->getSymbolIdx());
     int64_t midpx = (sym->getNBBOBidPx() + sym->getNBBOAskPx()) / 2;
-    if (ord->getSide()() == Side_t::BUY && ord->getPrice() < midpx) 
-        return;
-    if (ord->getSide()() == Side_t::SELL && ord->getPrice() > midpx) 
-        return;
-}
+    if (ord->getSide()() == Side_t::BUY) {
+        if (ord->getPrice() < midpx) return;
 
-void workl1cross(context &ctx) {
-    
+        if (ord->getPrice() >= sym->getINAskPx()) 
+            tradeInvestor(ctx, *ord, *sym); 
+
+        if (ord->getLeavesQty() > 0 && 
+            ord->getPrice() >= sym->getRPAskPx())
+            tradeRiskProvider(ctx, *ord, *sym); 
+    } else {
+        if (ord->getPrice() > midpx) return;
+
+        if (ord->getPrice() <= sym->getINBidPx())
+            tradeInvestor(ctx, *ord, *sym);
+        
+        if (ord->getLeavesQty() > 0 &&
+            ord->getPrice() <= sym->getRPBidPx())
+            tradeRiskProvider(ctx, *ord, *sym);
+    }
 }
 #endif

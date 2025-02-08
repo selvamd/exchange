@@ -275,13 +275,15 @@ std::string validate_new_order(context &ctx, OrderLookup &ord) {
         firm = createSubID(ctx, req.getPartySubId(), ord.getPartyId(), ord.getFirmId());
     ord.setPartySubId(firm->d_row);
 
-    //Adjust the urgency and contra category here based on urgency-level
-    auto urglvl = readUserConfig(ctx, ConfigName_t::SID_URGENCY_LEVEL, ord.getPartySubId(), ord.getSymbolIdx());
+    //Adjust the contra category here based on urgency
     if (ord.getOrderUrgency()() == OrderUrgency_t::HIGH)
         ord.setContraCategory(ContraCategory_t::PARITY_PLUS_TWO);
     if (ord.getOrderUrgency()() == OrderUrgency_t::MEDIUM)
         if (ord.getContraCategory()() != ContraCategory_t::PARITY)
             ord.setContraCategory(ContraCategory_t::PARITY_PLUS_TWO);
+
+    //Adjust the urgency and contra category here based on urgency-level
+    auto urglvl = readUserConfig(ctx, ConfigName_t::SID_URGENCY_LEVEL, ord.getPartySubId(), ord.getSymbolIdx());
     OrderUrgency_t urg = OrderUrgency_t::LOW;
     if (urglvl == 1) urg = OrderUrgency_t::MEDIUM;
     if (urglvl == 2) urg = OrderUrgency_t::HIGH;
@@ -289,8 +291,9 @@ std::string validate_new_order(context &ctx, OrderLookup &ord) {
     {
         if (urg == OrderUrgency_t::HIGH) 
             ord.setContraCategory(ContraCategory_t::PARITY_PLUS_TWO);
-        if (urg == OrderUrgency_t::MEDIUM)
-            if (ord.getContraCategory()() != ContraCategory_t::PARITY)
+        if (urg == OrderUrgency_t::MEDIUM) 
+            if (ord.getOrderUrgency()() != OrderUrgency_t::LOW || 
+                ord.getContraCategory()() != ContraCategory_t::PARITY)
                 ord.setContraCategory(ContraCategory_t::PARITY_PLUS_TWO);
         if (urg == OrderUrgency_t::LOW) 
             if (ord.getContraCategory()() != ContraCategory_t::PARITY || 
