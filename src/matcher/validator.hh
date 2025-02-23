@@ -172,8 +172,11 @@ bool is_match_eligible(context &ctx, int32_t lordb, int32_t lords)
     if (ordb->getPrice() < trdpx) return false;
     if (ords->getPrice() > trdpx) return false;
 
-    if (ordb->getOrderQty() < ords->getMinQty()) return false;
-    if (ords->getOrderQty() < ordb->getMinQty()) return false;
+
+    if (ordb->getLeavesQty() < ords->getMinQty()) return false;
+    if (ords->getLeavesQty() < ordb->getMinQty()) return false;
+    // if (ordb->getLeavesQty() <= 0) return false;
+    // if (ords->getLeavesQty() <= 0) return false;
 
     if (ordb->getOrderQty() == ordb->getCumQty()) return false;
     if (ords->getOrderQty() == ords->getCumQty()) return false;
@@ -245,7 +248,11 @@ std::string validate_new_order(context &ctx, OrderLookup &ord) {
     ord.setRiskTier(EnumData<RiskTier_t>(req.toStringRiskTier()));
     ord.setOrdTypeExt(EnumData<OrdTypeExt_t>(req.toStringOrdTypeExt()));
     ord.setInviteId(req.getInviteId());
-    ord.setMinQty(req.getMinQty());
+    if (ord.getOrdTypeExt()() == OrdTypeExt_t::FIRMUP)
+        ord.setOrderState(OrderState_t::ACTIVE);
+    else
+        ord.setOrderState(OrderState_t::MRI_WAIT);
+    ord.setMinQty(max(1,req.getMinQty()));
     if (ord.getOrdTypeExt()() == OrdTypeExt_t::CONDITIONAL && 
         ord.getTimeInForce()() != TimeInForce_t::DAY)
             return "CO must have tif=day";

@@ -73,6 +73,10 @@ int processRequests(context& ctx)
     return 0;
 }
 
+/*
+TODOs
+    1) Creation & Processing of all timer events (MRI,CO,PRF)
+*/
 int main(int , char ** )
 {
     signal(SIGINT, signalHandler);  

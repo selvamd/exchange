@@ -29,9 +29,28 @@ DEFINE_ENUM_TYPES(ContraCategory_t,PARITY,PARITY_PLUS_ONE, PARITY_PLUS_TWO)
 DEFINE_ENUM_TYPES(RiskTier_t,SILVER,GOLD,PLATINUM)
 DEFINE_ENUM_TYPES(SelfTradeInst_t,ALLOW,STOP_MPID_SUBID)
 DEFINE_ENUM_TYPES(MinQtyInst_t,TRADE_RESIDUE,CANCEL_RESIDUE)
-DEFINE_ENUM_TYPES(OrdTypeExt_t,FIRM,CONDITIONAL,FIRMUP)
 
+/*
+Conditional states: 
+    On New Order -  CONDITIONAL+MRI_WAIT
+    On MRI Activation -  CONDITIONAL+ACTIVE
+    Post execution/Invite - 
+        CONDITIONAL+CO_WAIT 
+        FIRM+CO_WAIT -  For CO vs Firm
+    On Initial Firmup -
+        Delete CONDITIONAL+CO_WAIT (No notifications)
+        Add FIRMUP+CO_WAIT - For CO vs CO
+    On Final Firmup -
+        Delete CONDITIONAL+CO_WAIT (No notifications)
+        Add FIRMUP+ACTIVE for new order
+        Flip to FIRMUP+ACTIVE for contra order
+        Flip to FIRM+ACTIVE for contra order
+    On CO TIMEOUT -
+        Cancel FIRMUPs
+*/
+DEFINE_ENUM_TYPES(OrdTypeExt_t,FIRM,CONDITIONAL,FIRMUP)
 DEFINE_ENUM_TYPES(OrderState_t,MRI_WAIT,ACTIVE,CO_WAIT)
+
 
 //SYM_*,GBL_* are symbol,global level configs. Every thing is user then symbol
 DEFINE_ENUM_TYPES(ConfigName_t,GBL_MAX_ORD_QTY,GBL_MAX_NOTIONAL, \

@@ -46,6 +46,15 @@ FirmLookup * findFirm(context &ctx, int64_t firmid, bool create = false)
     return obj;
 }
 
+int64_t findParentFirm(context &ctx, int32_t idx) 
+{
+    auto &db = ctx.imdb.getTable<FirmLookup>();
+    auto rec = db.getObject(idx);
+    if (rec != nullptr) 
+        return rec->getParentFirm();
+    return -1;
+}
+
 OrderLookup * findOrder(context &ctx, int64_t ordid, bool create = false) 
 {
     OrderLookup key;
@@ -61,11 +70,20 @@ OrderLookup * findOrder(context &ctx, int64_t ordid, bool create = false)
 
 OrderLookup * findConditionalOrder(context &ctx, int64_t invite, Side_t side) 
 {
+    //New COs not yet executed cannot be looked up this way
+    //There will be atmost 1 order per inviteid per side. 
+    //It can be either conditional or Firmup or firm
     auto &db = ctx.imdb.getTable<OrderLookup>();    
     OrderLookup key;
     key.setInviteId(invite);
     key.setSide(side);
     return db.findByUniqueKey("ConditionalIndex", &key);
+}
+
+inline int64_t getTradePrice(context &ctx, const int32_t &symidx) {
+    auto sym = ctx.imdb.getTable<SymbolLookup>().getObject(symidx);
+    int64_t midpx = (sym->getNBBOBidPx() + sym->getNBBOAskPx()) / 2;
+    return midpx;
 }
 
 
@@ -87,10 +105,17 @@ void updatebbo(context &ctx, int32_t symbol, int32_t lord) {
     }
 }
 
+TimerEvent * createTimerEvent(context &ctx, int32_t lord) 
+{
+    return nullptr;
+}
+
 OrderEvent * createOrderEvent(context &ctx, int32_t lord, OrderEventType_t evt) 
 {
     auto &db = ctx.imdb.getTable<OrderEvent>();
-    auto ord = ctx.imdb.getTable<OrderLookup>().getObject(lord);
+    auto &orddb = ctx.imdb.getTable<OrderLookup>();
+    auto ord = orddb.getObject(lord);
+    auto sym = ctx.imdb.getTable<SymbolLookup>().getObject(ord->getSymbolIdx());
     auto evtobj = db.createObject();
     evtobj->setOrdIdx(lord);
     evtobj->setTradePrice(0);
@@ -101,6 +126,47 @@ OrderEvent * createOrderEvent(context &ctx, int32_t lord, OrderEventType_t evt)
     evtobj->setExecId(ctx.getNextExecId());
     evtobj->setOrdStatus(ord->getOrdStatus());
     evtobj->setEventType(evt);
+    //FILL,REPLACED,UROUT,NOTHING_DONE
+    if (evt == OrderEventType_t::FILL || 
+        evt == OrderEventType_t::REPLACED ||
+        evt == OrderEventType_t::UROUT || 
+        evt == OrderEventType_t::NOTHING_DONE) 
+    {
+        int64_t bbopx = 0;
+        if (ord->getSide()() == Side_t::BUY) 
+            bbopx = (ord->getClientType()() == ClientType_t::INVESTOR)?
+                sym->getINBidPx():sym->getRPBidPx(); 
+        else
+            bbopx = (ord->getClientType()() == ClientType_t::INVESTOR)?
+                sym->getINAskPx():sym->getRPAskPx(); 
+        if (ord->getPrice() != bbopx) return evtobj;
+        OrderLookup key;
+        key.setSymbolIdx(ord->getSymbolIdx());
+        key.setSide(ord->getSide()());
+        key.setClientType(ord->getClientType());
+        bbopx = (ord->getSide()() == Side_t::BUY)? exchange::MIN_PRICE:exchange::MAX_PRICE;
+        DomainTable<OrderLookup>::IndexIterator itrS, itrE;
+        if (  orddb.begin(itrS,"BookIndex",&key) && orddb.end(itrE,"BookIndex",&key))
+            while (itrS != itrE) {
+                auto ord2 = *(itrS);
+                if (ord2->getOrderState()() != OrderState_t::ACTIVE) 
+                    continue;
+                if (ord2->getLeavesQty() <= 0) continue; 
+                if (ord2->getSide()() == Side_t::BUY) 
+                    bbopx = max(bbopx,ord2->getPrice());
+                else
+                    bbopx = min(bbopx,ord2->getPrice());
+                ++itrS;
+            }
+        if (ord->getSide()() == Side_t::BUY && ord->getClientType()() == ClientType_t::INVESTOR)
+            sym->setINBidPx(bbopx);
+        if (ord->getSide()() == Side_t::BUY && ord->getClientType()() == ClientType_t::RISK_PROVIDER)
+            sym->setRPBidPx(bbopx);
+        if (ord->getSide()() == Side_t::SELL && ord->getClientType()() == ClientType_t::INVESTOR)
+            sym->setINAskPx(bbopx);
+        if (ord->getSide()() == Side_t::SELL && ord->getClientType()() == ClientType_t::RISK_PROVIDER)
+            sym->setRPAskPx(bbopx);
+    }
     return evtobj;
 }
 
@@ -212,6 +278,18 @@ int64_t readSystemConfig(context &ctx, ConfigName_t config, int32_t symbol = 0)
     obj = db.findByPrimaryKey(&key);
     if (obj != nullptr) return obj->getConfigValue();
     return 0; // System configs unlike user configs are not expected to be missing
+}
+
+inline bool isPRFProvider(context &ctx, OrderLookup &ord, int32_t riskprovider) {
+    int64_t prf = 0;
+    if (ord.getSide()() != Side_t::SELL) 
+        prf = readUserConfig(ctx, ConfigName_t::SID_PRF_ASK_RP, ord.getPartySubId(), ord.getSymbolIdx());
+    else 
+        prf = readUserConfig(ctx, ConfigName_t::SID_PRF_BID_RP, ord.getPartySubId(), ord.getSymbolIdx());
+    auto &db = ctx.imdb.getTable<FirmLookup>();
+    auto rec = db.getObject(riskprovider);
+    if (rec == nullptr) return false;
+    return rec->getFirmId() == prf;
 }
 
 #endif
