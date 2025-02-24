@@ -53,6 +53,7 @@ DEFINE_ENUM_TYPES(OrderState_t,MRI_WAIT,ACTIVE,CO_WAIT)
 
 
 //SYM_*,GBL_* are symbol,global level configs. Every thing is user then symbol
+//All timers configs are in microseconds
 DEFINE_ENUM_TYPES(ConfigName_t,GBL_MAX_ORD_QTY,GBL_MAX_NOTIONAL, \
     SID_RT_ELIGIBLE,RP_RO_ELIGIBLE,SID_URGENCY_LEVEL, \
     RP_RT_NOTIONAL,RP_RO_NOTIONAL,SYM_RO2RT_MIN,SYM_RO2RT_MAX,RP_RO_PAUSED, \
