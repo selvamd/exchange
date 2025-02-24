@@ -75,7 +75,8 @@ int processRequests(context& ctx)
 
 /*
 TODOs
-    1) Creation & Processing of all timer events (MRI,CO,PRF)
+    1) Handling msgs: NBBO,CFO,CXL,Config
+    2) Handling Order,Cxl rejects
 */
 int main(int , char ** )
 {
