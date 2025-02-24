@@ -10,6 +10,11 @@
 #include "context.hpp"
 #include <math.h>
 #include <stdlib.h>
+
+#include <iostream>
+#include <cstdlib>
+#include <ctime>
+
 using namespace std;
 
 SymbolLookup * findSymbol(context &ctx, const char * csym, bool create = false) 
@@ -105,11 +110,6 @@ void updatebbo(context &ctx, int32_t symbol, int32_t lord) {
     }
 }
 
-TimerEvent * createTimerEvent(context &ctx, int32_t lord) 
-{
-    return nullptr;
-}
-
 OrderEvent * createOrderEvent(context &ctx, int32_t lord, OrderEventType_t evt) 
 {
     auto &db = ctx.imdb.getTable<OrderEvent>();
@@ -128,6 +128,7 @@ OrderEvent * createOrderEvent(context &ctx, int32_t lord, OrderEventType_t evt)
     evtobj->setEventType(evt);
     //FILL,REPLACED,UROUT,NOTHING_DONE
     if (evt == OrderEventType_t::FILL || 
+        evt == OrderEventType_t::INVITE || 
         evt == OrderEventType_t::REPLACED ||
         evt == OrderEventType_t::UROUT || 
         evt == OrderEventType_t::NOTHING_DONE) 
@@ -290,6 +291,36 @@ inline bool isPRFProvider(context &ctx, OrderLookup &ord, int32_t riskprovider) 
     auto rec = db.getObject(riskprovider);
     if (rec == nullptr) return false;
     return rec->getFirmId() == prf;
+}
+
+TimerEvent * createTimerEvent(context &ctx, TimerEventType_t evt, int32_t lord, int64_t inviteid) 
+{
+    auto &db = ctx.imdb.getTable<TimerEvent>();
+    auto &orddb = ctx.imdb.getTable<OrderLookup>();
+    auto ord = orddb.getObject(lord);
+    auto evtobj = db.createObject();
+    evtobj->setEventType(evt);
+    evtobj->setInviteID(inviteid);
+    evtobj->setOrderID(ord->getOrderId());
+    evtobj->setSymbolIdx(ord->getSymbolIdx());
+    evtobj->setSubIDIdx(ord->getPartySubId());
+    evtobj->setPrfMpidIdx(0);
+    evtobj->setSide(ord->getSide());
+    Timestamp ts;
+    ts.set();
+    int64_t wait = 0;
+    if (evt == TimerEventType_t::CO_WAIT) {
+        wait = readSystemConfig(ctx, ConfigName_t::GBL_CO_WAIT); 
+    } else if (evt == TimerEventType_t::PRF_TIMER) {
+        wait = readSystemConfig(ctx, ConfigName_t::SYM_PRF_WAIT, ord->getSymbolIdx()); 
+    } else {
+        std::srand(ts());
+        wait = readSystemConfig(ctx, ConfigName_t::SYM_MRI_RANDOM_WAIT, ord->getSymbolIdx());
+        wait = (wait * std::rand())/RAND_MAX;
+        wait += readSystemConfig(ctx, ConfigName_t::SYM_MRI_FIXED_WAIT, ord->getSymbolIdx()); 
+    }
+    evtobj->setEventTime(Timestamp(ts()+wait));
+    return evtobj;
 }
 
 #endif

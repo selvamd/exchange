@@ -90,7 +90,7 @@ void processNewOrder(context &ctx) {
     auto rec = orddb.copyObject(&ord);
     createOrderEvent(ctx, rec->d_row, OrderEventType_t::ACK);
     if (ord.getOrderState()() == OrderState_t::MRI_WAIT) {
-        createTimerEvent(ctx,rec->d_row);
+        createTimerEvent(ctx, TimerEventType_t::MRI_WAIT, rec->d_row, 0);
         return;
     } else if (ord.getOrdTypeExt()() == OrdTypeExt_t::FIRMUP) {
         auto contra = (ord.getSide()() == Side_t::BUY) ? Side_t::SELL : Side_t::BUY;
@@ -114,8 +114,6 @@ void processGenMsg(context &ctx) {
 }
 
 void processTimerMsg(context &ctx) {
-    //std::cout << ClientId << "," << "genmsg" << std::endl;
-    //auto &orddb = ctx.imdb.getTable<OrderLookup>();
     auto req = ctx.request()->timer_msg;
     if (req.getTimerEventType() == exchange::TimerEventType_t::MRI_WAIT) {
         auto ord = findOrder(ctx,req.getOrderId());
@@ -123,28 +121,44 @@ void processTimerMsg(context &ctx) {
         ord->setOrderState(OrderState_t::ACTIVE);
         updatebbo(ctx, ord->getSymbolIdx(), ord->d_row); 
         workOrder(ctx, ord->d_row);
-    } else if (req.getTimerEventType() == exchange::TimerEventType_t::CO_WAIT) {
+    } 
+    else if (req.getTimerEventType() == exchange::TimerEventType_t::CO_WAIT) 
+    {
         auto bord = findConditionalOrder(ctx, req.getInviteId(), Side_t::BUY);
         if (bord != nullptr && bord->getOrdTypeExt()() != OrdTypeExt_t::FIRM) {
-            bord->setOrdStatus(OrdStatus_t::CANCELED);
-            createOrderEvent(ctx, bord->d_row, OrderEventType_t::UROUT);
+            //one last sweep b4 cxl
+            workOrder(ctx, bord->d_row); 
+            if (bord->getLeavesQty() > 0) {
+                bord->setOrdStatus(OrdStatus_t::CANCELED);
+                createOrderEvent(ctx, bord->d_row, OrderEventType_t::UROUT);
+            }
         }
         auto sord = findConditionalOrder(ctx, req.getInviteId(), Side_t::SELL);
         if (sord != nullptr && bord->getOrdTypeExt()() != OrdTypeExt_t::FIRM) {
-            sord->setOrdStatus(OrdStatus_t::CANCELED);
-            createOrderEvent(ctx, sord->d_row, OrderEventType_t::UROUT);
+            //one last sweep b4 cxl
+            workOrder(ctx, sord->d_row);
+            if (sord->getLeavesQty() > 0) {
+                sord->setOrdStatus(OrdStatus_t::CANCELED);
+                createOrderEvent(ctx, sord->d_row, OrderEventType_t::UROUT);
+            }
         }
-    } else {
+    } 
+    else if (req.getTimerEventType() == exchange::TimerEventType_t::PRF_TIMER)
+    {
         //Process PRF Timeout
-        // req->timer_msg.setTimerEventType(evt->getEventType().toString());
-        // req->timer_msg.setOrderId(evt->getOrderID());
-        // req->timer_msg.setSymbolId(evt->getSymbolIdx());
-        // req->timer_msg.setSubId(evt->getSubIDIdx());
-        // req->timer_msg.setRiskProviderId(evt->getPrfMpidIdx());
-        // req->timer_msg.setSide(evt->getSide().toString());
-        // req->timer_msg.setInviteId(evt->getInviteID());
+        auto symidx = req.getSymbolId();
+        auto subidx = req.getSubId();
+        auto prfid  = req.getInviteId();
+        if (req.getSide() == exchange::Side_t::Buy) {
+            auto id = readUserConfig(ctx, ConfigName_t::SID_PRF_BID_ID, subidx, symidx);
+            if (id != prfid) return;
+            saveUserConfig(ctx, ConfigName_t::SID_PRF_BID_RP, subidx, symidx, 0);    
+        } else {
+            auto id = readUserConfig(ctx, ConfigName_t::SID_PRF_ASK_ID, subidx, symidx);
+            if (id != prfid) return;
+            saveUserConfig(ctx, ConfigName_t::SID_PRF_ASK_RP, subidx, symidx, 0);    
+        }
     }
-
 }
 
 void processNBBOMsg(context &ctx) {
@@ -189,8 +203,40 @@ inline void executeTrade(context &ctx, int32_t lord1, int32_t lord2) {
         if (!is_match_eligible(ctx,ord2->d_row,ord1->d_row))
             return;
     }
-    createOrderFill(ctx, ord1->d_row, trdpx, trdqty);
-    createOrderFill(ctx, ord2->d_row, trdpx, trdqty);
+    if (ord1->getOrdTypeExt()() == OrdTypeExt_t::CONDITIONAL || 
+        ord2->getOrdTypeExt()() == OrdTypeExt_t::CONDITIONAL) 
+    {
+        auto inviteid = ctx.getInviteId();
+        ord1->setInviteId(inviteid);
+        ord2->setInviteId(inviteid);
+        ord1->setOrderState(OrderState_t::CO_WAIT);
+        ord2->setOrderState(OrderState_t::CO_WAIT);
+        if (ord1->getOrdTypeExt()() == OrdTypeExt_t::CONDITIONAL)
+            createOrderEvent(ctx, ord1->d_row, OrderEventType_t::INVITE);
+        if (ord2->getOrdTypeExt()() == OrdTypeExt_t::CONDITIONAL)
+            createOrderEvent(ctx, ord2->d_row, OrderEventType_t::INVITE);
+        createTimerEvent(ctx, TimerEventType_t::CO_WAIT, ord1->d_row, inviteid); 
+    } else {
+        createOrderFill(ctx, ord1->d_row, trdpx, trdqty);
+        createOrderFill(ctx, ord2->d_row, trdpx, trdqty);
+        //save previous risk fill data and create Timer event
+        if (ord1->getClientType()() != ord2->getClientType()()) {
+            auto evtid = ctx.getNextExecId();
+            if (ord1->getClientType()() == ClientType_t::INVESTOR) {
+                auto cfgid = (ord1->getSide()() == Side_t::BUY)? ConfigName_t::SID_PRF_BID_ID : ConfigName_t::SID_PRF_ASK_ID;
+                auto cfgrp = (ord1->getSide()() == Side_t::BUY)? ConfigName_t::SID_PRF_BID_RP : ConfigName_t::SID_PRF_ASK_RP;
+                saveUserConfig(ctx, cfgid, ord1->getPartySubId(), ord1->getSymbolIdx(), evtid);
+                saveUserConfig(ctx, cfgrp, ord1->getPartySubId(), ord1->getSymbolIdx(), ord2->getPartyId());
+                createTimerEvent(ctx, TimerEventType_t::PRF_TIMER, ord1->d_row, evtid);
+            } else {
+                auto cfgid = (ord2->getSide()() == Side_t::BUY)? ConfigName_t::SID_PRF_BID_ID : ConfigName_t::SID_PRF_ASK_ID;
+                auto cfgrp = (ord2->getSide()() == Side_t::BUY)? ConfigName_t::SID_PRF_BID_RP : ConfigName_t::SID_PRF_ASK_RP;
+                saveUserConfig(ctx, cfgid, ord2->getPartySubId(), ord2->getSymbolIdx(), evtid);
+                saveUserConfig(ctx, cfgrp, ord2->getPartySubId(), ord2->getSymbolIdx(), ord1->getPartyId());
+                createTimerEvent(ctx, TimerEventType_t::PRF_TIMER, ord2->d_row, evtid);
+            }
+        }
+    }
 }
 
 inline void tradeInvestorUrgency(context &ctx, OrderLookup &ord, 
@@ -273,7 +319,7 @@ void tradeInvestor(context &ctx, OrderLookup &ord, SymbolLookup &sym)
             vec.push_back((*(itrS))->d_row);
             ++itrS;
         }
-tradeInvestorUrgency(ctx,ord,OrderUrgency_t::HIGH,vec);
+    tradeInvestorUrgency(ctx,ord,OrderUrgency_t::HIGH,vec);
     tradeInvestorUrgency(ctx,ord,OrderUrgency_t::MEDIUM,vec);
     tradeInvestorUrgency(ctx,ord,OrderUrgency_t::LOW,vec);
 }

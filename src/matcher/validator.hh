@@ -138,7 +138,7 @@ bool check_conditional_match(context &ctx, OrderLookup *ordin, OrderLookup *ordb
         // return false if ordbk has lower priority than my cowaiting co
         if (compare_priority(ordbk, ordc) < 0) 
             return false;
-    } else {
+    } else if (ordin->getOrdTypeExt()() == OrdTypeExt_t::FIRM) {
         if (ordin->getOrderState()() == OrderState_t::CO_WAIT) {
             if (ordbk->getOrdTypeExt()() == OrdTypeExt_t::CONDITIONAL)
                 return false;
