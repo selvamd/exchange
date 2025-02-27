@@ -424,17 +424,18 @@ class ConfigLookup : public DomainObjectBase<ConfigLookup>
         ConfigLookup(int i = -1, void * sBuff = NULL) : d_row(i), d_dbid(0) { clone(sBuff); }
     
         //Use DECLARE_INDEX if the data member is used to construct an index 
-        DECLARE_INDEX(EnumData<ConfigName_t>, ConfigName, 0)
-        DECLARE_INDEX(int32_t, SymIdx,          1)
-        DECLARE_INDEX(int32_t, FirmIdx,         2)
-        DECLARE_MEMBER(FixedString<20>, Symbol, 3)
-        DECLARE_MEMBER(int64_t, FirmId,         4)
-        DECLARE_MEMBER(int64_t, ConfigValue,    5)
-        DECLARE_MEMBER(int32_t, ConfigScale,    6)
+        DECLARE_INDEX(int32_t, ConfigId,        0)
+        DECLARE_INDEX(EnumData<ConfigName_t>, ConfigName, 1)
+        DECLARE_INDEX(int32_t, SymIdx,          2)
+        DECLARE_INDEX(int32_t, FirmIdx,         3)
+        DECLARE_MEMBER(FixedString<20>, Symbol, 4)
+        DECLARE_MEMBER(int64_t, FirmId,         5)
+        DECLARE_MEMBER(int64_t, ConfigValue,    6)
+        DECLARE_MEMBER(int32_t, ConfigScale,    7)
 
-        static int maxFields()    { return 7; }
+        static int maxFields()    { return 8; }
         #define SET(FieldIndex) DECLARE_END(FieldIndex)
-        SET7()
+        SET8()
         #undef SET
                     
         const int d_row;
@@ -446,9 +447,18 @@ class ConfigLookup : public DomainObjectBase<ConfigLookup>
         static void createIndices(DomainTable<ConfigLookup> &table)
         {
             table.addIndex("PrimaryKey", primarykey);
+            table.addIndex("NameKey", namekey);
         };
 
         static bool primarykey(const ConfigLookup * a,  const ConfigLookup * b)
+        {
+            if ( a->getConfigId() != b->getConfigId() )
+                if (min(a->getConfigId(),b->getConfigId()) >= 0)
+                        return ( a->getConfigId() < b->getConfigId() );
+            return a->d_row < b->d_row;
+        };
+
+        static bool namekey(const ConfigLookup * a,  const ConfigLookup * b)
         {
             int i = a->getConfigName().compareForIndex(b->getConfigName());
             if (i != 0) return i < 0;
@@ -463,4 +473,5 @@ class ConfigLookup : public DomainObjectBase<ConfigLookup>
 
             return a->d_row < b->d_row;
         };
+
 };

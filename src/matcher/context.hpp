@@ -39,7 +39,7 @@ class context
         res->setFirmId(firmid);
         return res;
     }
-
+    
     void printdb() 
     {
       std::cout << "Order count        : " << imdb.getRecordCount<OrderLookup>() << std::endl;
@@ -48,6 +48,9 @@ class context
       std::cout << "Config count       : " << imdb.getRecordCount<ConfigLookup>() << std::endl;
       std::cout << "TimerEvent count   : " << imdb.getRecordCount<TimerEvent>() << std::endl;
       std::cout << "OrderEvent count   : " << imdb.getRecordCount<OrderEvent>() << std::endl;
+    //   std::cout << *imdb.getTable<FirmLookup>().getObject(0) << std::endl;
+    //   std::cout << *imdb.getTable<SymbolLookup>().getObject(0) << std::endl;
+    //   std::cout << *imdb.getTable<ConfigLookup>().getObject(0) << std::endl;
     }
 
     void initdb() 
@@ -96,6 +99,7 @@ class context
       imdb.getLogger(bufLogger,8192);
       dbwriter.setBuffer(bufSerializer,1500);
       imdb.addDBChangeListener(&dbwriter);
+      printdb();
     }
 
     void closedb() {
@@ -111,7 +115,7 @@ class context
       imdb.store<OrderEvent>(dbfile);
     }
 
-    DomainDB &imdb = DomainDB::instance(1);
+    DomainDB &imdb = DomainDB::instance(0);
     exchange_api::ExchangeApiUnion * request() { return &m_request; }
     exchange_api::ExchangeApiUnion * response() { return &m_response; }
 
