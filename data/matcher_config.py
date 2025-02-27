@@ -70,4 +70,4 @@ for sym in "NVDA GOOG MSFT".split():
     symbol(sym)
 firm("GWY01", "GATEWAY")
 firm("ME01", "MATCHER")
-firm("GOLDMAN", "FIRMID", "GSRPP,GSRPG,GSRPS", "GLD01,GLDA,GLDB")
+firm("GS", "FIRMID", "GSRPP,GSRPG,GSRPS", "GLD01,GLDA,GLDB")
