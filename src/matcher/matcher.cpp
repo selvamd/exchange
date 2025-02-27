@@ -51,6 +51,8 @@ int processRequests(context& ctx)
             sendResponses(ctx,server);
             memset((void *)inmsg, 0, sizeof(inmsg));
             memset((void *)outmsg, 0, sizeof(outmsg));
+            ctx.imdb.commit(); 
+            ctx.imdb.getTable<OrderEvent>().reset();
         }
         iRC = server->Read(iClientID, (char *)inmsg);
         if ( iRC == ux_selector::SUCCESS )
@@ -62,13 +64,13 @@ int processRequests(context& ctx)
                 inmsg->gen_msg.setClientId(iClientID);
             handler[(int)evtreq](ctx);
             sendResponses(ctx,server);
+            ctx.imdb.commit(); 
+            ctx.imdb.getTable<OrderEvent>().reset();
         }
         else
         {
             return (iRC == ux_selector::END_OF_SOCK_LIST)? 0:-1;
         }
-        ctx.imdb.commit(); 
-        ctx.imdb.getTable<OrderEvent>().reset();
     }
     return 0;
 }

@@ -30,10 +30,11 @@ SymbolLookup * findSymbol(context &ctx, const char * csym, bool create = false)
     return obj;
 }
 
-FirmLookup * findFirmByName(context &ctx, FirmRecordType_t type, const char * cname) {
+FirmLookup * findFirmByName(context &ctx, FirmRecordType_t type, const char * cname, int32_t parent = 0) {
     FirmLookup key;
     key.setFirmRecordType(type);
     key.setName(cname);
+    key.setParentFirm(parent);
     auto &db = ctx.imdb.getTable<FirmLookup>();
     return db.findByUniqueKey("NameKey", &key);
 }

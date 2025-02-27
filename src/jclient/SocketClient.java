@@ -16,11 +16,12 @@ public class SocketClient {
         Socket sock = new Socket("localhost", 65000);
         OutputStream out = sock.getOutputStream();
         InputStream in = sock.getInputStream();
-        String nam = "selvamd";
-        final byte[] bo = new byte[38];
+        String nam = "GWY01      ";
+        final byte[] bo = new byte[42];
         byte[] b = nam.getBytes(StandardCharsets.UTF_8);
-        final byte[] bytes = ByteBuffer.allocate(38).putInt(0).
-            putInt(38).putLong(100).put(b).putInt(0).put(b).putInt(0).array();
+        b[5] = 0;
+        final byte[] bytes = ByteBuffer.allocate(42).putInt(0).
+            putInt(42).putLong(100).put(b).put(b).putInt(0).array();
         // Thread th1 = new Thread(new Runnable() { 
         //     public void run() { 
         //         try { 
@@ -30,18 +31,25 @@ public class SocketClient {
         //     public void run() { 
         //         try { for (int i=0;i<1E6;i++) in.read(bo); 
         //         } catch (Exception e) {} }}  ); 
-        long l0 = System.currentTimeMillis();  
-        for (int i=0;i<100;i++) 
-        {
-            out.write(bytes);
-            in.read(bo);
-        }
+        //long l0 = System.currentTimeMillis();  
+        out.write(bytes);
+        in.read(bo);
+        ByteBuffer buf = ByteBuffer.wrap(bo);
+        System.out.println(buf.getInt());
+        System.out.println(buf.getInt());
+        System.out.println(buf.getLong());
+        buf.get(b);
+        System.out.println(new String(b, StandardCharsets.UTF_8));
+        buf.get(b);
+        System.out.println(new String(b, StandardCharsets.UTF_8));
+        System.out.println(buf.getInt());
+
         // th1.start();
         // th2.start();
         // th1.join();
         // th2.join();
-        long l1 = System.currentTimeMillis();            
-        System.out.println(1E6*1E3/(l1-l0));
+        //long l1 = System.currentTimeMillis();            
+        // System.out.println(1E6*1E3/(l1-l0));
         Thread.sleep(1000);
     }
 }

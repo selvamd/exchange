@@ -97,8 +97,8 @@ class context
       }
 
       imdb.getLogger(bufLogger,8192);
-      dbwriter.setBuffer(bufSerializer,1500);
-      imdb.addDBChangeListener(&dbwriter);
+      dbwriter->setBuffer(bufSerializer,1500);
+      imdb.addDBChangeListener(dbwriter);
       printdb();
     }
 
@@ -113,6 +113,7 @@ class context
       imdb.store<ConfigLookup>(dbfile);
       imdb.store<TimerEvent>(dbfile);
       imdb.store<OrderEvent>(dbfile);
+      delete dbwriter;
     }
 
     DomainDB &imdb = DomainDB::instance(0);
@@ -130,9 +131,9 @@ class context
     exchange_api::ExchangeApiUnion m_response;
     const std::string dbfile = "../data/matcher.dat";
     const std::string dblog = "../data/matcher.log";
-    DBFileSerializer dbwriter = DBFileSerializer(dblog);
     char bufSerializer[1500];
     char bufLogger[8192];
-};
+    DBFileSerializer *dbwriter = new DBFileSerializer(dblog);
+  };
 
 #endif

@@ -45,8 +45,17 @@ void sendResponses(context &ctx, ux_selector *server)
 {
     //server->Writeint iClientID, char * Msg, int MsgLen);
     if (ctx.request()->api_msg_type == exchange::ExchangeApiMsgType_t::gen_msg || 
-        ctx.request()->api_msg_type == exchange::ExchangeApiMsgType_t::config_msg)
+        ctx.request()->api_msg_type == exchange::ExchangeApiMsgType_t::config_msg) 
+    {
+        auto firm = findFirmByName(ctx, FirmRecordType_t::GATEWAY, ctx.response()->gen_msg.getTargetCompId());
+        if (firm != nullptr) {
+            ctx.response()->hton();
+            server->Write(firm->getClientID(), (char *)ctx.response(), sizeof(ctx.response()->gen_msg));
+        } else {
+            std::cout << "Gateway lookup failed " << ctx.response()->gen_msg.getTargetCompId() << std::endl;
+        }
         return;
+    }
 
     auto &firmdb = ctx.imdb.getTable<FirmLookup>(); 
     if (ctx.response()->api_msg_type != exchange::ExchangeApiMsgType_t::gen_msg) {
@@ -64,6 +73,7 @@ void sendResponses(context &ctx, ux_selector *server)
                 auto ord = orddb.getObject(ordevt->getOrdIdx());
                 auto firm = firmdb.getObject(ord->getSenderCompId());
                 prepareExecReport(ctx, evtdb.getObjectID(ordevt));
+                ctx.response()->hton();
                 server->Write(firm->getClientID(), (char *)ctx.response(), sizeof(ctx.response()->exec_report_msg));
                 ++itrS;
             }
@@ -111,6 +121,11 @@ void processGenMsg(context &ctx) {
     auto req = ctx.request()->gen_msg;
     auto firm = findFirmByName(ctx, FirmRecordType_t::GATEWAY, req.getSenderCompId());
     if (firm != nullptr) firm->setClientID(req.getClientId());
+
+    auto res = ctx.response();
+    res->gen_msg.reset();
+    res->gen_msg.setSenderCompId(req.getSenderCompId());
+    res->gen_msg.setTargetCompId(req.getTargetCompId());
 }
 
 void processTimerMsg(context &ctx) {
