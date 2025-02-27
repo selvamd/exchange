@@ -264,24 +264,22 @@ struct NewOrderMsg
     DECLARE_STRING_FIELD(party_id, PartyId, exchange::COMP_ID_LENGTH)
     DECLARE_STRING_FIELD(party_sub_id, PartySubId, exchange::COMP_ID_LENGTH)
     DECLARE_STRING_FIELD(account, Account, exchange::COMP_ID_LENGTH)
-    DECLARE_STRING_FIELD(cl_ord_id, ClOrdId, exchange::CLORD_ID_LENGTH)
-    DECLARE_ENUM_FIELD(exec_inst, ExecInst, exchange::ExecInst_t)
-    DECLARE_NUM_FIELD(order_qty, OrderQty, int64_t)
-    DECLARE_ENUM_FIELD(ord_type, OrdType, exchange::OrdType_t)
-    DECLARE_PRICE_FIELD(price, Price, int64_t, exchange::PRICE_SCALE)
-    DECLARE_ENUM_FIELD(side, Side, exchange::Side_t)
     DECLARE_STRING_FIELD(symbol, Symbol, exchange::SYMBOL_LENGTH)
-    DECLARE_ENUM_FIELD(time_in_force, TimeInForce, exchange::TimeInForce_t)
-    DECLARE_NUM_FIELD(poss_resend, PossResend, int32_t)
-    DECLARE_ENUM_FIELD(auto_cancel, AutoCancel, exchange::AutoCancel_t)
-    DECLARE_NUM_FIELD(invite_id, InviteId, int64_t)
-    DECLARE_NUM_FIELD(min_qty, MinQty, int32_t)
-    DECLARE_ENUM_FIELD(client_type, ClientType, exchange::ClientType_t)
-    // DECLARE_TIME_FIELD(sending_time, SendingTime, int64_t)
-    // DECLARE_PRICE_FIELD(stop_px, StopPx, int64_t, exchange::PRICE_SCALE)
-    // DECLARE_STRING_FIELD(trading_session_id, TradingSessionId, exchange::TRADE_SESSION_LENGTH)
-    // DECLARE_NUM_FIELD(no_trading_sessions, NoTradingSessions, int32_t)
+    DECLARE_STRING_FIELD(cl_ord_id, ClOrdId, exchange::CLORD_ID_LENGTH)
 
+    DECLARE_ENUM_FIELD(exec_inst, ExecInst, exchange::ExecInst_t)
+    DECLARE_ENUM_FIELD(ord_type, OrdType, exchange::OrdType_t)
+    DECLARE_ENUM_FIELD(side, Side, exchange::Side_t)
+    DECLARE_ENUM_FIELD(time_in_force, TimeInForce, exchange::TimeInForce_t)
+    DECLARE_ENUM_FIELD(auto_cancel, AutoCancel, exchange::AutoCancel_t)
+
+    DECLARE_NUM_FIELD(min_qty, MinQty, int32_t)
+    DECLARE_NUM_FIELD(poss_resend, PossResend, int32_t)
+    DECLARE_NUM_FIELD(order_qty, OrderQty, int64_t)
+    DECLARE_PRICE_FIELD(price, Price, int64_t, exchange::PRICE_SCALE)
+    DECLARE_NUM_FIELD(invite_id, InviteId, int64_t)
+
+    DECLARE_ENUM_FIELD(client_type, ClientType, exchange::ClientType_t)
     DECLARE_ENUM_FIELD(conditional_eligible, ConditionalEligible, exchange::ConditionalEligible_t)
     DECLARE_ENUM_FIELD(order_life, OrderLife, exchange::OrderLife_t)
     DECLARE_ENUM_FIELD(order_urgency, OrderUrgency, exchange::OrderUrgency_t)
@@ -290,6 +288,11 @@ struct NewOrderMsg
     DECLARE_ENUM_FIELD(self_trade_inst, SelfTradeInst, exchange::SelfTradeInst_t)
     DECLARE_ENUM_FIELD(min_qty_inst, MinQtyInst, exchange::MinQtyInst_t)
     DECLARE_ENUM_FIELD(ord_type_ext, OrdTypeExt, exchange::OrdTypeExt_t)
+    
+    // DECLARE_TIME_FIELD(sending_time, SendingTime, int64_t)
+    // DECLARE_PRICE_FIELD(stop_px, StopPx, int64_t, exchange::PRICE_SCALE)
+    // DECLARE_STRING_FIELD(trading_session_id, TradingSessionId, exchange::TRADE_SESSION_LENGTH)
+    // DECLARE_NUM_FIELD(no_trading_sessions, NoTradingSessions, int32_t)
 
 
     void reset()
@@ -366,13 +369,13 @@ struct NewOrderMsg
         msg.printPartyId(out);
         msg.printPartySubId(out);
         msg.printAccount(out);
+        msg.printSymbol(out);
         msg.printClOrdId(out);
         msg.printExecInst(out);
         msg.printOrderQty(out);
         msg.printOrdType(out);
         msg.printPrice(out);
         msg.printSide(out);
-        msg.printSymbol(out);
         msg.printTimeInForce(out);
         msg.printPossResend(out);
         msg.printAutoCancel(out);
@@ -599,37 +602,40 @@ struct ExecReportMsg
     DECLARE_STRING_FIELD(party_id, PartyId, exchange::COMP_ID_LENGTH)
     DECLARE_STRING_FIELD(party_sub_id, PartySubId, exchange::COMP_ID_LENGTH)
     DECLARE_STRING_FIELD(account, Account, exchange::COMP_ID_LENGTH)
+
     DECLARE_STRING_FIELD(cl_ord_id, ClOrdId, exchange::CLORD_ID_LENGTH)
-    DECLARE_ENUM_FIELD(exec_inst, ExecInst, exchange::ExecInst_t)
-    DECLARE_NUM_FIELD(order_qty, OrderQty, int64_t)
-    DECLARE_ENUM_FIELD(ord_type, OrdType, exchange::OrdType_t)
-    DECLARE_PRICE_FIELD(price, Price, int64_t, exchange::PRICE_SCALE)
-    DECLARE_TIME_FIELD(sending_time, SendingTime, int64_t)
-    DECLARE_ENUM_FIELD(side, Side, exchange::Side_t)
+    DECLARE_STRING_FIELD(orig_cl_ord_id, OrigClOrdId, exchange::CLORD_ID_LENGTH)
     DECLARE_STRING_FIELD(symbol, Symbol, exchange::SYMBOL_LENGTH)
-    DECLARE_ENUM_FIELD(time_in_force, TimeInForce, exchange::TimeInForce_t)
-    DECLARE_NUM_FIELD(poss_resend, PossResend, int32_t)
-    DECLARE_ENUM_FIELD(auto_cancel, AutoCancel, exchange::AutoCancel_t)
+    DECLARE_STRING_FIELD(security_id, SecurityId, exchange::SYMBOL_LENGTH)
+    DECLARE_STRING_FIELD(trading_session_id, TradingSessionId, exchange::TRADE_SESSION_LENGTH)
+    DECLARE_STRING_FIELD(text, Text, exchange::TEXT_LENGTH)
+
+    DECLARE_NUM_FIELD(order_qty, OrderQty, int64_t)
+    DECLARE_TIME_FIELD(sending_time, SendingTime, int64_t)
     DECLARE_PRICE_FIELD(stop_px, StopPx, int64_t, exchange::PRICE_SCALE)
     DECLARE_NUM_FIELD(max_floor, MaxFloor, int64_t)
     DECLARE_TIME_FIELD(expire_time, ExpireTime, int64_t)
-    DECLARE_ENUM_FIELD(client_type, ClientType, exchange::ClientType_t)
-    DECLARE_STRING_FIELD(trading_session_id, TradingSessionId, exchange::TRADE_SESSION_LENGTH)
-    DECLARE_NUM_FIELD(no_trading_sessions, NoTradingSessions, int32_t)
     DECLARE_PRICE_FIELD(avg_px, AvgPx, int64_t, exchange::PRICE_SCALE)
     DECLARE_NUM_FIELD(cum_qty, CumQty, int64_t)
     DECLARE_NUM_FIELD(exec_id, ExecId, int64_t)
     DECLARE_NUM_FIELD(exec_ref_id, ExecRefId, int64_t)
-    DECLARE_ENUM_FIELD(exec_type, ExecType, exchange::ExecType_t)
     DECLARE_PRICE_FIELD(last_px, LastPx, int64_t, exchange::PRICE_SCALE)
     DECLARE_NUM_FIELD(last_shares, LastShares, int64_t)
     DECLARE_NUM_FIELD(order_id, OrderId, int64_t)
-    DECLARE_STRING_FIELD(orig_cl_ord_id, OrigClOrdId, exchange::CLORD_ID_LENGTH)
     DECLARE_NUM_FIELD(trade_id, TradeId, int64_t)
-    DECLARE_ENUM_FIELD(ord_status, OrdStatus, exchange::OrdStatus_t)
-    DECLARE_STRING_FIELD(security_id, SecurityId, exchange::SYMBOL_LENGTH)
-    DECLARE_STRING_FIELD(text, Text, exchange::TEXT_LENGTH)
     DECLARE_TIME_FIELD(transact_time, TransactTime, int64_t)
+    DECLARE_PRICE_FIELD(price, Price, int64_t, exchange::PRICE_SCALE)
+
+    DECLARE_ENUM_FIELD(exec_inst, ExecInst, exchange::ExecInst_t)
+    DECLARE_ENUM_FIELD(ord_type, OrdType, exchange::OrdType_t)
+    DECLARE_ENUM_FIELD(side, Side, exchange::Side_t)
+    DECLARE_ENUM_FIELD(time_in_force, TimeInForce, exchange::TimeInForce_t)
+    DECLARE_NUM_FIELD(poss_resend, PossResend, int32_t)
+    DECLARE_ENUM_FIELD(auto_cancel, AutoCancel, exchange::AutoCancel_t)
+    DECLARE_ENUM_FIELD(client_type, ClientType, exchange::ClientType_t)
+    DECLARE_NUM_FIELD(no_trading_sessions, NoTradingSessions, int32_t)
+    DECLARE_ENUM_FIELD(exec_type, ExecType, exchange::ExecType_t)
+    DECLARE_ENUM_FIELD(ord_status, OrdStatus, exchange::OrdStatus_t)
     DECLARE_ENUM_FIELD(open_close, OpenClose, exchange::OpenClose_t)
     DECLARE_ENUM_FIELD(ord_rej_reason, OrdRejReason, exchange::OrdRejReason_t)
 
