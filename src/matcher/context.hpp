@@ -113,12 +113,12 @@ class context
       imdb.store<ConfigLookup>(dbfile);
       imdb.store<TimerEvent>(dbfile);
       imdb.store<OrderEvent>(dbfile);
-      delete dbwriter;
     }
 
     DomainDB &imdb = DomainDB::instance(0);
     exchange_api::ExchangeApiUnion * request() { return &m_request; }
     exchange_api::ExchangeApiUnion * response() { return &m_response; }
+
 
   private:
 

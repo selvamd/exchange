@@ -124,8 +124,10 @@ void processGenMsg(context &ctx) {
 
     auto res = ctx.response();
     res->gen_msg.reset();
-    res->gen_msg.setSenderCompId(req.getSenderCompId());
-    res->gen_msg.setTargetCompId(req.getTargetCompId());
+    res->gen_msg.setSenderCompId(req.getTargetCompId());
+    res->gen_msg.setTargetCompId(req.getSenderCompId());
+    res->gen_msg.setSeqNum(100);
+    res->gen_msg.setClientId(0);
 }
 
 void processTimerMsg(context &ctx) {
