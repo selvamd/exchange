@@ -23,6 +23,12 @@ public class Msg {
         Msg msg = new Msg(typ);
         msg = msg.addl(100).adds("GWY01",10).adds("ME01",10);
         if (typ == 0) return msg.addi(0);
+        //sym,bid,ask,bqty,sqty
+        if (typ == 1) return msg.adds("NVDA",40).addl(0).addl(0).addl(0).addl(0);
+        //TimerEventType,OrderId,SymbolId,SubId,RiskProviderId,Side,InviteId    
+        if (typ == 2) return msg.addi(0).addl(0).addi(0).addi(0).addi(0).addi(0).addl(0);
+        //TableName,ConfigName,ConfigValue,Symbol,FirmId
+        if (typ == 3) return msg.adds("",50).adds("",50).adds("",50).adds("",40).addl(0);
         if (typ == 4) {
             String cols = "OnBehalfOfCompId,DeliverToCompId,OnBehalfOfLocationId,DeliverToLocationId,PartyId,PartySubId,Account";
             for (String col:cols.split(",")) msg.adds("",10); //COMP_ID_LEN

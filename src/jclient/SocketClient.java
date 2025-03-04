@@ -67,7 +67,6 @@ public class SocketClient {
 
         client.logon();
         client.read().print();
-
         client.neworder();
         for (Msg msg:client.readall(msgs))
             msg.print();
